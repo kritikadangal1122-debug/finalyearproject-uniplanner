@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import { createLearningOsApp } from './app.ts';
 
 const port = Number(process.env.PORT ?? 4000);

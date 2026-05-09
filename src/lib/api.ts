@@ -109,6 +109,43 @@ async function request<T>(path: string, options: RequestInit = {}) {
   return data as T;
 }
 
+export interface UploadResourceResponse {
+  resource: {
+    id: string;
+    classId: string;
+    name: string;
+    type: string;
+    size: string;
+    preview: string;
+    fileUrl: string;
+    updatedAt: string;
+  };
+}
+
+export interface UploadSubmissionResponse {
+  submission: {
+    id: string;
+    assignmentId: string;
+    studentId: string;
+    contentText: string;
+    fileUrl: string;
+    fileName: string;
+    submittedAt: string;
+  };
+}
+
+const uploadRequest = async <T>(path: string, formData: FormData): Promise<T> => {
+  const token = getStoredToken();
+  const response = await fetch(`${API_BASE}${path}`, {
+    method: 'POST',
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+    body: formData,
+  });
+  const data = await response.json().catch(() => null);
+  if (!response.ok) throw new Error(data?.error ?? 'Upload failed');
+  return data as T;
+};
+
 export const api = {
   login: (email: string, password: string) => request<LoginResult>('/auth/login', {
     method: 'POST',
@@ -129,4 +166,19 @@ export const api = {
   nextBestAction: (userId: string, token: string) => request(`/insights/next-best-action/${userId}`, {
     headers: { Authorization: `Bearer ${token}` },
   }),
+  uploadResource: (formData: FormData) =>
+    uploadRequest<UploadResourceResponse>('/upload/resource', formData),
+  uploadSubmission: (formData: FormData) =>
+    uploadRequest<UploadSubmissionResponse>('/upload/submission', formData),
+  deleteSubmission: (submissionId: string) =>
+    request<{ ok: boolean }>(`/submissions/${submissionId}`, {
+      method: 'DELETE',
+      headers: authHeaders(),
+    }),
+  gradeSubmission: (submissionId: string, score: number, feedback: string) =>
+    request<{ ok: boolean }>(`/submissions/${submissionId}/grade`, {
+      method: 'PATCH',
+      body: JSON.stringify({ score, feedback }),
+      headers: authHeaders(),
+    }),
 };

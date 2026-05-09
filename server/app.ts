@@ -35,6 +35,9 @@ export const createLearningOsApp = () => {
     res.json({ ok: true, state: store.getPublicSnapshot() });
   }));
 
+  const uploadsPath = resolve(process.cwd(), 'server/data/uploads');
+  app.use('/uploads', express.static(uploadsPath));
+
   const distPath = resolve(process.cwd(), 'dist');
   const hasFrontendBuild = existsSync(join(distPath, 'index.html'));
 

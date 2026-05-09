@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Bell, LogOut, Menu, Moon, Search, Sun } from 'lucide-react';
+import { Bell, LogOut, Menu, Moon, Sun } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useLms } from '../../context/LmsContext';
 
@@ -34,15 +34,7 @@ export default function Topbar() {
             <p className="text-xs uppercase tracking-[0.28em] text-text-muted">Nexus LMS</p>
             <h1 className="mt-1 text-2xl font-semibold text-text-primary">{title}</h1>
           </div>
-          <div className="relative flex-1 max-w-2xl">
-            <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-text-muted" />
-            <input
-              type="search"
-              aria-label="Search the workspace"
-              placeholder="Search classes, assignments, messages, and files"
-              className="w-full rounded-2xl border border-border-subtle bg-white/5 py-3 pl-11 pr-4 text-sm text-text-primary outline-none transition placeholder:text-text-muted focus:border-primary/50"
-            />
-          </div>
+          <div className="flex-1" />
         </div>
 
         <div className="flex items-center gap-3">

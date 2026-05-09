@@ -148,7 +148,7 @@ export const seededAssignments: Assignment[] = [
     manualReview: true,
     aiPlagiarismScore: 9,
     description: 'Review three interfaces and annotate where motion can reduce friction.',
-    rubric: ['Clarity of examples', 'Actionable feedback', 'Accessibility awareness'],
+    rubric: [],
   },
   {
     id: 'assignment-2',
@@ -218,32 +218,7 @@ export const seededDiscussions: DiscussionThread[] = [
   },
 ];
 
-export const seededMessages: ChatMessage[] = [
-  {
-    id: 'message-1',
-    classId: 'class-design',
-    sender: 'Sarah Jenkins',
-    role: 'teacher',
-    message: 'Please post your wireframes in the class folder before tomorrow.',
-    time: '9:02 AM',
-  },
-  {
-    id: 'message-2',
-    classId: 'class-design',
-    sender: 'Alex Rivers',
-    role: 'student',
-    message: 'Uploaded the first draft. I also added keyboard focus states.',
-    time: '9:08 AM',
-  },
-  {
-    id: 'message-3',
-    classId: 'class-frontend',
-    sender: 'Sarah Jenkins',
-    role: 'teacher',
-    message: 'Office hours move to 2 PM because of the design review.',
-    time: '9:10 AM',
-  },
-];
+export const seededMessages: ChatMessage[] = [];
 
 export const seededNotifications: NotificationItem[] = [
   {
@@ -381,6 +356,7 @@ export const createInitialState = (): AppState => ({
   users: seededUsers,
   classes: seededClasses,
   assignments: seededAssignments,
+  submissions: [],
   discussions: seededDiscussions,
   messages: seededMessages,
   notifications: seededNotifications,

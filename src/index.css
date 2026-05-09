@@ -15,6 +15,15 @@
   --app-text-secondary: #a8b4c8;
   --app-text-muted: #6f7e98;
   --app-shadow: 0 20px 90px rgba(2, 6, 23, 0.28);
+
+  /* Alias variables expected by components */
+  --panel: var(--app-panel);
+  --primary: #3b82f6;
+  --secondary: #7c3aed;
+  --bg-main: var(--app-bg);
+  --text-primary: var(--app-text-primary);
+  --text-secondary: var(--app-text-secondary);
+  --text-muted: var(--app-text-muted);
 }
 
 [data-theme='light'] {
@@ -30,6 +39,15 @@
   --app-text-secondary: #475569;
   --app-text-muted: #64748b;
   --app-shadow: 0 20px 90px rgba(15, 23, 42, 0.08);
+
+  /* Alias variables expected by components (light theme) */
+  --panel: var(--app-panel);
+  --primary: #3b82f6;
+  --secondary: #7c3aed;
+  --bg-main: var(--app-bg);
+  --text-primary: var(--app-text-primary);
+  --text-secondary: var(--app-text-secondary);
+  --text-muted: var(--app-text-muted);
 }
 
 @theme {
@@ -58,6 +76,7 @@
 @layer base {
   html {
     background: var(--app-bg);
+    scroll-behavior: smooth;
   }
 
   body {
@@ -68,6 +87,25 @@
       radial-gradient(circle at top right, rgba(124, 58, 237, 0.14), transparent 24%),
       linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent 32%),
       var(--app-bg);
+  }
+
+  :where(button, a, input, select, textarea) {
+    @apply transition-all duration-200 ease-out;
+  }
+
+  :where(button, a, input, select, textarea):focus-visible {
+    outline: 2px solid rgba(59, 130, 246, 0.75);
+    outline-offset: 2px;
+  }
+
+  button:not(:disabled),
+  a {
+    cursor: pointer;
+  }
+
+  button:disabled,
+  [aria-disabled='true'] {
+    cursor: not-allowed;
   }
 
   .glass {

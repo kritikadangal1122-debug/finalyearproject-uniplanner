@@ -181,18 +181,14 @@
         "title": "Microinteraction Audit",
         "kind": "assignment",
         "dueDate": "Today · 5:00 PM",
-        "status": "assigned",
+        "status": "submitted",
         "maxPoints": 100,
-        "submissions": 19,
+        "submissions": 20,
         "averageScore": 86,
         "manualReview": true,
         "aiPlagiarismScore": 9,
         "description": "Review three interfaces and annotate where motion can reduce friction.",
-        "rubric": [
-          "Clarity of examples",
-          "Actionable feedback",
-          "Accessibility awareness"
-        ]
+        "rubric": []
       },
       {
         "id": "assignment-2",
@@ -232,6 +228,7 @@
         ]
       }
     ],
+    "submissions": [],
     "discussions": [
       {
         "id": "thread-1",
@@ -269,32 +266,7 @@
         "pinned": false
       }
     ],
-    "messages": [
-      {
-        "id": "message-1",
-        "classId": "class-design",
-        "sender": "Sarah Jenkins",
-        "role": "teacher",
-        "message": "Please post your wireframes in the class folder before tomorrow.",
-        "time": "9:02 AM"
-      },
-      {
-        "id": "message-2",
-        "classId": "class-design",
-        "sender": "Alex Rivers",
-        "role": "student",
-        "message": "Uploaded the first draft. I also added keyboard focus states.",
-        "time": "9:08 AM"
-      },
-      {
-        "id": "message-3",
-        "classId": "class-frontend",
-        "sender": "Sarah Jenkins",
-        "role": "teacher",
-        "message": "Office hours move to 2 PM because of the design review.",
-        "time": "9:10 AM"
-      }
-    ],
+    "messages": [],
     "notifications": [
       {
         "id": "note-1",
@@ -388,13 +360,25 @@
   },
   "submissions": [
     {
+      "id": "submission-911316ff-c92b-43cb-ad2b-28b98be068f5",
+      "assignmentId": "assignment-1",
+      "studentId": "user-student",
+      "contentText": "",
+      "fileUrl": "/uploads/b9162b0f-47ce-44e1-9f32-afdf27623bfc-devcontainer.json",
+      "fileName": "devcontainer.json",
+      "submittedAt": "2026-05-08T17:22:32.658Z",
+      "plagiarismScore": 0,
+      "qualityScore": 0,
+      "lateFlag": false
+    },
+    {
       "id": "submission-design-1",
       "assignmentId": "assignment-1",
       "studentId": "user-student",
       "contentText": "I reviewed the interface hierarchy, improved spacing, and documented the keyboard focus states.",
       "submittedAt": "2026-05-06T08:25:00.000Z",
       "score": 89,
-      "teacherFeedback": "Good accessibility awareness and clear rationale.",
+      "teacherFeedback": "Good rationale and constructive suggestions.",
       "aiFeedback": "Strong draft. Add one more concrete example of a reduced-friction interaction.",
       "plagiarismScore": 6,
       "qualityScore": 88,
@@ -429,94 +413,94 @@
   ],
   "analyticsEvents": [
     {
-      "id": "event-547e85cb-1da1-4cb1-ac9b-2d4994d9d097",
+      "id": "event-b7f61a9b-cb4d-4251-b27a-9db0261d49e2",
+      "userId": "user-student",
+      "type": "auth",
+      "name": "login_success",
+      "payload": {
+        "role": "student"
+      },
+      "createdAt": "2026-05-08T17:11:32.563Z"
+    },
+    {
+      "id": "event-db2a8aad-7405-49b5-974e-864c948ef051",
+      "userId": "user-student",
+      "type": "auth",
+      "name": "login_success",
+      "payload": {
+        "role": "student"
+      },
+      "createdAt": "2026-05-08T16:02:17.088Z"
+    },
+    {
+      "id": "event-bb35d457-d350-4f28-8e72-66ce4c62b0a8",
       "userId": "user-teacher",
       "type": "auth",
       "name": "login_success",
       "payload": {
         "role": "teacher"
       },
-      "createdAt": "2026-05-06T12:05:26.678Z"
+      "createdAt": "2026-05-08T15:58:42.594Z"
     },
     {
-      "id": "event-1975a019-5c3d-4a4e-9be0-3ba51783f774",
+      "id": "event-54105043-9fec-40e9-aaad-7da6a753a38b",
       "userId": "user-student",
       "type": "auth",
       "name": "login_success",
       "payload": {
         "role": "student"
       },
-      "createdAt": "2026-05-06T11:27:35.955Z"
+      "createdAt": "2026-05-08T15:56:23.937Z"
     },
     {
-      "id": "event-13164cb8-7584-45c2-ae7a-914cae8ede6f",
+      "id": "event-622aabbe-bd34-474a-a8ea-7138223f3150",
+      "userId": "user-teacher",
+      "type": "auth",
+      "name": "login_success",
+      "payload": {
+        "role": "teacher"
+      },
+      "createdAt": "2026-05-08T15:54:57.606Z"
+    },
+    {
+      "id": "event-3035a3e5-a2f4-4661-8044-68e17f4d57e0",
       "userId": "user-student",
       "type": "auth",
       "name": "login_success",
       "payload": {
         "role": "student"
       },
-      "createdAt": "2026-05-06T11:23:51.149Z"
+      "createdAt": "2026-05-08T15:49:55.938Z"
     },
     {
-      "id": "event-3ca0afca-e566-4798-a2d8-4311db674b0f",
+      "id": "event-d037a01a-2776-437a-bf0a-e550ad5927d7",
       "userId": "user-admin",
       "type": "auth",
       "name": "login_success",
       "payload": {
         "role": "admin"
       },
-      "createdAt": "2026-05-06T11:19:04.549Z"
+      "createdAt": "2026-05-08T15:47:53.635Z"
     },
     {
-      "id": "event-a80462d4-cce8-4cea-883a-3edded324b99",
-      "userId": "user-teacher",
-      "type": "auth",
-      "name": "login_success",
-      "payload": {
-        "role": "teacher"
-      },
-      "createdAt": "2026-05-06T11:17:19.191Z"
-    },
-    {
-      "id": "event-6d0cb159-e707-46f8-ae33-699500883f26",
+      "id": "event-f935b980-1b55-4413-9740-8c882d1d1f8e",
       "userId": "user-student",
       "type": "auth",
       "name": "login_success",
       "payload": {
         "role": "student"
       },
-      "createdAt": "2026-05-06T11:16:11.529Z"
+      "createdAt": "2026-05-08T15:42:55.772Z"
     },
     {
-      "id": "event-c119ceb8-f8b5-41a6-94f7-84238e5870b5",
-      "userId": "user-teacher",
-      "type": "auth",
-      "name": "login_success",
-      "payload": {
-        "role": "teacher"
-      },
-      "createdAt": "2026-05-06T11:14:44.534Z"
-    },
-    {
-      "id": "event-9ff83e6a-2577-4fea-925a-2ffb1443c77d",
+      "id": "event-1b9f1801-bb5c-4ec8-ad8b-8a52b018e42c",
       "userId": "user-student",
       "type": "auth",
       "name": "login_success",
       "payload": {
         "role": "student"
       },
-      "createdAt": "2026-05-06T11:12:37.847Z"
-    },
-    {
-      "id": "event-03151e16-ffd0-4775-9322-93735397d9b7",
-      "userId": "user-student",
-      "type": "auth",
-      "name": "login_success",
-      "payload": {
-        "role": "student"
-      },
-      "createdAt": "2026-05-06T10:42:05.228Z"
+      "createdAt": "2026-05-08T14:57:59.919Z"
     },
     {
       "id": "event-01dc148c-ae52-41d0-af32-6cc41aeca87f",
@@ -593,25 +577,25 @@
   ],
   "sessions": [
     {
-      "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c2VyLXRlYWNoZXIiLCJyb2xlIjoidGVhY2hlciIsImlhdCI6MTc3ODA2OTEyNjY3NiwiZXhwIjoxNzc4MDk3OTI2Njc2LCJqdGkiOiI4MmU0YzAyNC1jZDc4LTRhNTgtOWRiZi00MTBjMTRhZmI0YmUifQ.xSOYZ8jAL4pd7RKowsaELBUvKaXVCYrsW5acv0V5Rkg",
-      "userId": "user-teacher",
-      "role": "teacher",
-      "issuedAt": 1778069126677,
-      "expiresAt": 1778097926676
-    },
-    {
-      "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c2VyLXN0dWRlbnQiLCJyb2xlIjoic3R1ZGVudCIsImlhdCI6MTc3ODA2Njg1NTk1MSwiZXhwIjoxNzc4MDk1NjU1OTUxLCJqdGkiOiI5NGUwZWZiYi1hMzQ1LTQ2MzItYTk3Ny03NDhmNzQwYTY3MWIifQ.eQUyB0jTvh-xIQa52oDtjCSPhpVU8A_ZtY2gBt3T474",
+      "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c2VyLXN0dWRlbnQiLCJyb2xlIjoic3R1ZGVudCIsImlhdCI6MTc3ODI2MDI5MjU2MCwiZXhwIjoxNzc4Mjg5MDkyNTYwLCJqdGkiOiJmZDg0ZmY5NC05ZWM2LTQwMzUtYWZkNi1jOTA1Y2E4MmUyNDgifQ.kMeMnnGdAwHUk-quJu8rzoL0-__JnPirBWOSvmXY9oU",
       "userId": "user-student",
       "role": "student",
-      "issuedAt": 1778066855952,
-      "expiresAt": 1778095655951
+      "issuedAt": 1778260292560,
+      "expiresAt": 1778289092560
     },
     {
-      "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c2VyLWFkbWluIiwicm9sZSI6ImFkbWluIiwiaWF0IjoxNzc4MDY2MzQ0NTQ2LCJleHAiOjE3NzgwOTUxNDQ1NDYsImp0aSI6ImI0ODM4ZWRlLTJjNjQtNDQzZC05MDIwLTg2Yjg1MTcxZGE1NCJ9.4EqkhR-qwh4y5icsXqRXMMCe6spXRmoQgRqNss5pyCg",
+      "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c2VyLXRlYWNoZXIiLCJyb2xlIjoidGVhY2hlciIsImlhdCI6MTc3ODI1NTkyMjU5MiwiZXhwIjoxNzc4Mjg0NzIyNTkyLCJqdGkiOiJmOWFmYjE0Yi1kODljLTRiYjItOTI5OC1lODc4ZmE2YTNmODgifQ.gQlws7s-vNN7PBgBTJ2oNFX2ERyAgUwrhlyz7gsPrXg",
+      "userId": "user-teacher",
+      "role": "teacher",
+      "issuedAt": 1778255922592,
+      "expiresAt": 1778284722592
+    },
+    {
+      "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c2VyLWFkbWluIiwicm9sZSI6ImFkbWluIiwiaWF0IjoxNzc4MjU1MjczNjMzLCJleHAiOjE3NzgyODQwNzM2MzMsImp0aSI6IjQzMTJkZDk3LTQyMjctNDMxNi1hZmE0LWIxYTIwNDk2MmQ0YiJ9.LlRGN-Ybpg9F4GQR2qo6sgg0HENFfARpXJOIi-iNQuw",
       "userId": "user-admin",
       "role": "admin",
-      "issuedAt": 1778066344546,
-      "expiresAt": 1778095144546
+      "issuedAt": 1778255273633,
+      "expiresAt": 1778284073633
     }
   ],
   "goals": [

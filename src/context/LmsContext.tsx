@@ -9,6 +9,7 @@ import {
   NotificationItem,
   ResourceItem,
   SessionInfo,
+  StudentSubmission,
   ThemeMode,
   UserAccount,
 } from '../lib/types';
@@ -57,6 +58,25 @@ interface ResourcePayload {
   preview: string;
 }
 
+interface CreateUserPayload {
+  name: string;
+  email: string;
+  password: string;
+  role: UserAccount['role'];
+  title?: string;
+  bio?: string;
+  avatar?: string;
+}
+
+interface UpdateUserPayload {
+  userId: string;
+  name?: string;
+  email?: string;
+  title?: string;
+  bio?: string;
+  role?: UserAccount['role'];
+}
+
 interface LmsContextValue {
   state: AppState;
   currentUser: UserAccount | null;
@@ -72,6 +92,7 @@ interface LmsContextValue {
   createClassroom: (payload: ClassPayload) => void;
   joinClassroom: (code: string) => void;
   archiveClassroom: (classId: string) => void;
+  unarchiveClassroom: (classId: string) => void;
   createAssignment: (payload: AssignmentPayload) => void;
   createThread: (payload: { classId: string; author: string; message: string; role: UserAccount['role'] }) => void;
   sendMessage: (payload: { classId: string; sender: string; role: UserAccount['role']; message: string }) => void;
@@ -79,6 +100,14 @@ interface LmsContextValue {
   createEvent: (payload: EventPayload) => void;
   addResource: (payload: ResourcePayload) => void;
   resetDemoData: () => void;
+  addSubmission: (sub: StudentSubmission) => void;
+  removeSubmission: (submissionId: string) => void;
+  gradeSubmission: (submissionId: string, score: number, feedback: string) => void;
+  // Admin functions
+  createUser: (payload: CreateUserPayload) => void;
+  updateUser: (payload: UpdateUserPayload) => void;
+  deleteUser: (userId: string) => void;
+  updateUserRole: (userId: string, newRole: UserAccount['role']) => void;
 }
 
 const LmsContext = createContext<LmsContextValue | undefined>(undefined);
@@ -116,6 +145,7 @@ const loadState = (): AppState => {
       users: parsed.users?.length ? parsed.users : base.users,
       classes,
       assignments: parsed.assignments?.length ? parsed.assignments : base.assignments,
+      submissions: parsed.submissions ?? [],
       discussions: parsed.discussions?.length ? parsed.discussions : base.discussions,
       messages: parsed.messages?.length ? parsed.messages : base.messages,
       notifications: parsed.notifications?.length ? parsed.notifications : base.notifications,
@@ -357,6 +387,15 @@ export function LmsProvider({ children }: { children: ReactNode }) {
     }));
   };
 
+  const unarchiveClassroom = (classId: string) => {
+    setState((previous) => ({
+      ...previous,
+      classes: previous.classes.map((item) =>
+        item.id === classId ? { ...item, archived: false } : item,
+      ),
+    }));
+  };
+
   const createAssignment = (payload: AssignmentPayload) => {
     const assignment: Assignment = {
       id: buildId('assignment'),
@@ -459,8 +498,138 @@ export function LmsProvider({ children }: { children: ReactNode }) {
     }));
   };
 
+  const addSubmission = (sub: StudentSubmission) => {
+    setState((prev) => ({ ...prev, submissions: [sub, ...prev.submissions] }));
+  };
+
+  const removeSubmission = (submissionId: string) => {
+    setState((prev) => ({
+      ...prev,
+      submissions: prev.submissions.filter((s) => s.id !== submissionId),
+    }));
+  };
+
+  const gradeSubmission = (submissionId: string, score: number, feedback: string) => {
+    setState((prev) => ({
+      ...prev,
+      submissions: prev.submissions.map((s) =>
+        s.id === submissionId ? { ...s, score, teacherFeedback: feedback } : s,
+      ),
+    }));
+  };
+
   const resetDemoData = () => {
     setState(createInitialState());
+  };
+
+  // Admin user management functions
+  const createUser = (payload: CreateUserPayload) => {
+    const newUser: UserAccount = {
+      id: buildId('user'),
+      name: payload.name,
+      email: payload.email,
+      passwordHash: payload.password, // In production, this would be hashed
+      role: payload.role,
+      title: payload.title || '',
+      avatar: payload.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${payload.email}`,
+      bio: payload.bio || '',
+      locale: 'en',
+      xp: 0,
+      badges: [],
+    };
+
+    setState((previous) => ({
+      ...previous,
+      users: [...previous.users, newUser],
+      notifications: [
+        {
+          id: buildId('note'),
+          title: 'User created',
+          description: `${newUser.name} (${newUser.role}) has been added to the system.`,
+          priority: 'normal',
+          unread: true,
+          time: 'Just now',
+          kind: 'admin',
+        },
+        ...previous.notifications,
+      ],
+    }));
+  };
+
+  const updateUser = (payload: UpdateUserPayload) => {
+    setState((previous) => ({
+      ...previous,
+      users: previous.users.map((user) =>
+        user.id === payload.userId
+          ? {
+              ...user,
+              name: payload.name ?? user.name,
+              email: payload.email ?? user.email,
+              title: payload.title ?? user.title,
+              bio: payload.bio ?? user.bio,
+              role: payload.role ?? user.role,
+            }
+          : user,
+      ),
+      notifications: [
+        {
+          id: buildId('note'),
+          title: 'User updated',
+          description: `${payload.name || 'User'} has been updated.`,
+          priority: 'normal',
+          unread: true,
+          time: 'Just now',
+          kind: 'admin',
+        },
+        ...previous.notifications,
+      ],
+    }));
+  };
+
+  const deleteUser = (userId: string) => {
+    const userToDelete = state.users.find((u) => u.id === userId);
+    if (!userToDelete) return;
+
+    setState((previous) => ({
+      ...previous,
+      users: previous.users.filter((user) => user.id !== userId),
+      notifications: [
+        {
+          id: buildId('note'),
+          title: 'User deleted',
+          description: `${userToDelete.name} has been removed from the system.`,
+          priority: 'normal',
+          unread: true,
+          time: 'Just now',
+          kind: 'admin',
+        },
+        ...previous.notifications,
+      ],
+    }));
+  };
+
+  const updateUserRole = (userId: string, newRole: UserAccount['role']) => {
+    const userToUpdate = state.users.find((u) => u.id === userId);
+    if (!userToUpdate) return;
+
+    setState((previous) => ({
+      ...previous,
+      users: previous.users.map((user) =>
+        user.id === userId ? { ...user, role: newRole } : user,
+      ),
+      notifications: [
+        {
+          id: buildId('note'),
+          title: 'Role granted',
+          description: `${userToUpdate.name}'s role has been changed to ${newRole}.`,
+          priority: 'normal',
+          unread: true,
+          time: 'Just now',
+          kind: 'admin',
+        },
+        ...previous.notifications,
+      ],
+    }));
   };
 
   return (
@@ -480,6 +649,7 @@ export function LmsProvider({ children }: { children: ReactNode }) {
         createClassroom,
         joinClassroom,
         archiveClassroom,
+        unarchiveClassroom,
         createAssignment,
         createThread,
         sendMessage,
@@ -487,6 +657,13 @@ export function LmsProvider({ children }: { children: ReactNode }) {
         createEvent,
         addResource,
         resetDemoData,
+        addSubmission,
+        removeSubmission,
+        gradeSubmission,
+        createUser,
+        updateUser,
+        deleteUser,
+        updateUserRole,
       }}
     >
       {children}

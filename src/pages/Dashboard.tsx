@@ -196,7 +196,13 @@ export default function Dashboard() {
           <h3 className="text-xl font-display font-bold text-white">Upcoming Events</h3>
           <div className="space-y-4">
             {upcomingEvents.map((event) => (
-              <div key={event.id} className="glass flex cursor-pointer items-center gap-4 rounded-xl border-l-4 border-l-primary/30 p-4 transition-all hover:bg-white/[0.05] group">
+              <button
+                key={event.id}
+                type="button"
+                onClick={() => navigate('/app/calendar')}
+                aria-label={`Open ${event.title} in calendar`}
+                className="glass group flex w-full items-center gap-4 rounded-xl border-l-4 border-l-primary/30 p-4 text-left transition-all hover:bg-white/[0.05]"
+              >
                 <div className="min-w-[50px] text-center">
                   <p className="text-[10px] uppercase font-bold text-text-muted">{event.date}</p>
                   <p className="text-sm font-bold text-white">{event.startTime}</p>
@@ -205,10 +211,10 @@ export default function Dashboard() {
                   <h5 className="text-sm font-semibold text-white transition-colors group-hover:text-primary">{event.title}</h5>
                   <p className="text-xs text-text-muted">{event.type}</p>
                 </div>
-                <button type="button" aria-label={`View options for ${event.title}`} onClick={() => navigate('/app/calendar')} className="text-text-muted transition-colors hover:text-white">
+                <span className="text-text-muted transition-colors group-hover:text-white" aria-hidden="true">
                   <MoreVertical className="h-4 w-4" />
-                </button>
-              </div>
+                </span>
+              </button>
             ))}
           </div>
 

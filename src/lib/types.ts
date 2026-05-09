@@ -70,6 +70,18 @@ export interface Assignment {
   rubric: string[];
 }
 
+export interface StudentSubmission {
+  id: string;
+  assignmentId: string;
+  studentId: string;
+  fileName: string;
+  fileUrl: string;
+  notes: string;
+  submittedAt: string;
+  score?: number;
+  teacherFeedback?: string;
+}
+
 export interface DiscussionThread {
   id: string;
   classId: string;
@@ -121,6 +133,7 @@ export interface ResourceItem {
   size: string;
   updatedAt: string;
   preview: string;
+  fileUrl?: string;
 }
 
 export interface AnalyticsSnapshot {
@@ -152,6 +165,7 @@ export interface AppState {
   users: UserAccount[];
   classes: Classroom[];
   assignments: Assignment[];
+  submissions: StudentSubmission[];
   discussions: DiscussionThread[];
   messages: ChatMessage[];
   notifications: NotificationItem[];

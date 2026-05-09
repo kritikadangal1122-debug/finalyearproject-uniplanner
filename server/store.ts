@@ -23,7 +23,7 @@ const seedSubmissions = (app: AppState): SubmissionRecord[] => {
       contentText: 'I reviewed the interface hierarchy, improved spacing, and documented the keyboard focus states.',
       submittedAt: '2026-05-06T08:25:00.000Z',
       score: 89,
-      teacherFeedback: 'Good accessibility awareness and clear rationale.',
+      teacherFeedback: 'Good rationale and clear suggestions.',
       aiFeedback: 'Strong draft. Add one more concrete example of a reduced-friction interaction.',
       plagiarismScore: 6,
       qualityScore: 88,
