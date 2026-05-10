@@ -1,11 +1,9 @@
-import type express from 'express';
-import { hashPassword } from '../security';
-import { store } from '../store';
-import { API_PREFIX, createJsonRoute, requireAuth, requireRole } from '../http';
 import { randomUUID } from 'crypto';
+import { hashPassword } from '../security.js';
+import { store } from '../store.js';
+import { API_PREFIX, createJsonRoute, requireAuth, requireRole } from '../http.js';
 
-export const registerAdminModule = (app: express.Express) => {
-  // Get all users
+export const registerAdminModule = (app) => {
   app.get(`${API_PREFIX}/admin/users`, createJsonRoute((req, res) => {
     const auth = requireAuth(req, res);
     if (!auth) return;
@@ -30,7 +28,6 @@ export const registerAdminModule = (app: express.Express) => {
     res.json({ users });
   }));
 
-  // Create a new user
   app.post(`${API_PREFIX}/admin/users`, createJsonRoute((req, res) => {
     const auth = requireAuth(req, res);
     if (!auth) return;
@@ -39,15 +36,7 @@ export const registerAdminModule = (app: express.Express) => {
       return;
     }
 
-    const { name, email, password, role, title, bio, avatar } = req.body as {
-      name?: string;
-      email?: string;
-      password?: string;
-      role?: string;
-      title?: string;
-      bio?: string;
-      avatar?: string;
-    };
+    const { name, email, password, role, title, bio, avatar } = req.body;
 
     if (!name || !email || !password || !role) {
       res.status(400).json({ error: 'Name, email, password, and role are required.' });
@@ -70,40 +59,24 @@ export const registerAdminModule = (app: express.Express) => {
       name,
       email,
       passwordHash: hashPassword(password),
-      role: role as 'student' | 'teacher' | 'admin',
+      role,
       title: title || '',
       avatar: avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${email}`,
       bio: bio || '',
       locale: 'en',
       xp: 0,
-      badges: [] as string[],
+      badges: [],
     };
 
-    const updatedApp = {
-      ...snapshot.app,
-      users: [...snapshot.app.users, newUser],
-    };
-
-    store.replaceApp(updatedApp);
+    store.replaceApp({ ...snapshot.app, users: [...snapshot.app.users, newUser] });
     store.createAnalyticsEvent('admin', 'user_created', { role: newUser.role }, auth.user.id);
 
     res.json({
       ok: true,
-      user: {
-        id: newUser.id,
-        name: newUser.name,
-        email: newUser.email,
-        role: newUser.role,
-        title: newUser.title,
-        avatar: newUser.avatar,
-        bio: newUser.bio,
-        xp: newUser.xp,
-        badges: newUser.badges,
-      },
+      user: { id: newUser.id, name: newUser.name, email: newUser.email, role: newUser.role, title: newUser.title, avatar: newUser.avatar, bio: newUser.bio, xp: newUser.xp, badges: newUser.badges },
     });
   }));
 
-  // Update a user
   app.put(`${API_PREFIX}/admin/users/:userId`, createJsonRoute((req, res) => {
     const auth = requireAuth(req, res);
     if (!auth) return;
@@ -113,13 +86,7 @@ export const registerAdminModule = (app: express.Express) => {
     }
 
     const { userId } = req.params;
-    const { name, email, title, bio, role } = req.body as {
-      name?: string;
-      email?: string;
-      title?: string;
-      bio?: string;
-      role?: string;
-    };
+    const { name, email, title, bio, role } = req.body;
 
     const snapshot = store.getSnapshot();
     const userIndex = snapshot.app.users.findIndex((user) => user.id === userId);
@@ -131,7 +98,6 @@ export const registerAdminModule = (app: express.Express) => {
 
     const existingUser = snapshot.app.users[userIndex];
 
-    // Check if new email is already taken by another user
     if (email && email.toLowerCase() !== existingUser.email.toLowerCase()) {
       if (snapshot.app.users.some((u) => u.email.toLowerCase() === email.toLowerCase())) {
         res.status(409).json({ error: 'User with this email already exists.' });
@@ -139,7 +105,6 @@ export const registerAdminModule = (app: express.Express) => {
       }
     }
 
-    // Validate role if provided
     if (role && !['student', 'teacher', 'admin'].includes(role)) {
       res.status(400).json({ error: 'Role must be student, teacher, or admin.' });
       return;
@@ -151,37 +116,21 @@ export const registerAdminModule = (app: express.Express) => {
       email: email ?? existingUser.email,
       title: title ?? existingUser.title,
       bio: bio ?? existingUser.bio,
-      role: (role ?? existingUser.role) as 'student' | 'teacher' | 'admin',
+      role: role ?? existingUser.role,
     };
 
     const updatedUsers = [...snapshot.app.users];
     updatedUsers[userIndex] = updatedUser;
 
-    const updatedApp = {
-      ...snapshot.app,
-      users: updatedUsers,
-    };
-
-    store.replaceApp(updatedApp);
+    store.replaceApp({ ...snapshot.app, users: updatedUsers });
     store.createAnalyticsEvent('admin', 'user_updated', { role: updatedUser.role }, auth.user.id);
 
     res.json({
       ok: true,
-      user: {
-        id: updatedUser.id,
-        name: updatedUser.name,
-        email: updatedUser.email,
-        role: updatedUser.role,
-        title: updatedUser.title,
-        avatar: updatedUser.avatar,
-        bio: updatedUser.bio,
-        xp: updatedUser.xp,
-        badges: updatedUser.badges,
-      },
+      user: { id: updatedUser.id, name: updatedUser.name, email: updatedUser.email, role: updatedUser.role, title: updatedUser.title, avatar: updatedUser.avatar, bio: updatedUser.bio, xp: updatedUser.xp, badges: updatedUser.badges },
     });
   }));
 
-  // Update user role
   app.patch(`${API_PREFIX}/admin/users/:userId/role`, createJsonRoute((req, res) => {
     const auth = requireAuth(req, res);
     if (!auth) return;
@@ -191,7 +140,7 @@ export const registerAdminModule = (app: express.Express) => {
     }
 
     const { userId } = req.params;
-    const { role } = req.body as { role?: string };
+    const { role } = req.body;
 
     if (!role || !['student', 'teacher', 'admin'].includes(role)) {
       res.status(400).json({ error: 'Role must be student, teacher, or admin.' });
@@ -206,39 +155,19 @@ export const registerAdminModule = (app: express.Express) => {
       return;
     }
 
-    const updatedUser = {
-      ...snapshot.app.users[userIndex],
-      role: role as 'student' | 'teacher' | 'admin',
-    };
-
+    const updatedUser = { ...snapshot.app.users[userIndex], role };
     const updatedUsers = [...snapshot.app.users];
     updatedUsers[userIndex] = updatedUser;
 
-    const updatedApp = {
-      ...snapshot.app,
-      users: updatedUsers,
-    };
-
-    store.replaceApp(updatedApp);
+    store.replaceApp({ ...snapshot.app, users: updatedUsers });
     store.createAnalyticsEvent('admin', 'role_granted', { oldRole: snapshot.app.users[userIndex].role, newRole: role }, auth.user.id);
 
     res.json({
       ok: true,
-      user: {
-        id: updatedUser.id,
-        name: updatedUser.name,
-        email: updatedUser.email,
-        role: updatedUser.role,
-        title: updatedUser.title,
-        avatar: updatedUser.avatar,
-        bio: updatedUser.bio,
-        xp: updatedUser.xp,
-        badges: updatedUser.badges,
-      },
+      user: { id: updatedUser.id, name: updatedUser.name, email: updatedUser.email, role: updatedUser.role, title: updatedUser.title, avatar: updatedUser.avatar, bio: updatedUser.bio, xp: updatedUser.xp, badges: updatedUser.badges },
     });
   }));
 
-  // Delete a user
   app.delete(`${API_PREFIX}/admin/users/:userId`, createJsonRoute((req, res) => {
     const auth = requireAuth(req, res);
     if (!auth) return;
@@ -248,7 +177,6 @@ export const registerAdminModule = (app: express.Express) => {
     }
 
     const { userId } = req.params;
-
     const snapshot = store.getSnapshot();
     const userIndex = snapshot.app.users.findIndex((user) => user.id === userId);
 
@@ -259,7 +187,6 @@ export const registerAdminModule = (app: express.Express) => {
 
     const deletedUser = snapshot.app.users[userIndex];
 
-    // Prevent deleting admin user if they're the only admin
     if (deletedUser.role === 'admin') {
       const adminCount = snapshot.app.users.filter((u) => u.role === 'admin').length;
       if (adminCount <= 1) {
@@ -268,13 +195,7 @@ export const registerAdminModule = (app: express.Express) => {
       }
     }
 
-    const updatedUsers = snapshot.app.users.filter((user) => user.id !== userId);
-    const updatedApp = {
-      ...snapshot.app,
-      users: updatedUsers,
-    };
-
-    store.replaceApp(updatedApp);
+    store.replaceApp({ ...snapshot.app, users: snapshot.app.users.filter((user) => user.id !== userId) });
     store.createAnalyticsEvent('admin', 'user_deleted', { role: deletedUser.role }, auth.user.id);
 
     res.json({ ok: true, message: `User ${deletedUser.name} has been deleted.` });

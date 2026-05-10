@@ -1,14 +1,10 @@
-import type express from 'express';
-import type { Request, Response } from 'express';
 import { randomUUID } from 'crypto';
-import { store } from './store';
-import { verifyJwt } from './security';
-import type { AuthContext } from './types';
-import type { Role } from '../src/lib/types.ts';
+import { store } from './store.js';
+import { verifyJwt } from './security.js';
 
 export const API_PREFIX = '/api';
 
-export const createJsonRoute = (handler: (req: Request, res: Response) => void | Promise<void>) => async (req: Request, res: Response) => {
+export const createJsonRoute = (handler) => async (req, res) => {
   try {
     await handler(req, res);
   } catch (error) {
@@ -17,7 +13,7 @@ export const createJsonRoute = (handler: (req: Request, res: Response) => void |
   }
 };
 
-export const requireAuth = (req: Request, res: Response): AuthContext | null => {
+export const requireAuth = (req, res) => {
   const authorization = req.header('authorization');
   if (!authorization?.startsWith('Bearer ')) {
     res.status(401).json({ error: 'Missing bearer token.' });
@@ -61,7 +57,7 @@ export const requireAuth = (req: Request, res: Response): AuthContext | null => 
   };
 };
 
-export const requireRole = (auth: AuthContext, roles: Role[]) => roles.includes(auth.role);
+export const requireRole = (auth, roles) => roles.includes(auth.role);
 
 export const createClassCode = () => `NX-${Math.floor(1000 + Math.random() * 8999)}`;
 
@@ -70,7 +66,7 @@ export const classColor = () => {
   return palette[Math.floor(Math.random() * palette.length)];
 };
 
-export const mentionsFromMessage = (message: string) => {
+export const mentionsFromMessage = (message) => {
   const matches = message.match(/@([a-zA-Z0-9_]+)/g) ?? [];
   return matches.map((item) => item.slice(1));
 };

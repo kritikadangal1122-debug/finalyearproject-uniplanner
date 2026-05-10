@@ -1,12 +1,11 @@
-import type express from 'express';
-import { getJwtSecret, hashPassword, signJwt } from '../security';
-import { store } from '../store';
-import { toPublicUser } from '../types';
-import { API_PREFIX, createJsonRoute, requireAuth } from '../http';
+import { getJwtSecret, hashPassword, signJwt } from '../security.js';
+import { store } from '../store.js';
+import { toPublicUser } from '../types.js';
+import { API_PREFIX, createJsonRoute, requireAuth } from '../http.js';
 
 const SESSION_TTL_MS = 8 * 60 * 60 * 1000;
 
-export const registerAuthModule = (app: express.Express) => {
+export const registerAuthModule = (app) => {
   app.get(`${API_PREFIX}/health`, createJsonRoute((_req, res) => {
     res.json({
       ok: true,
@@ -29,7 +28,7 @@ export const registerAuthModule = (app: express.Express) => {
   }));
 
   app.post(`${API_PREFIX}/auth/login`, createJsonRoute((req, res) => {
-    const { email, password } = req.body as { email?: string; password?: string };
+    const { email, password } = req.body;
     if (!email || !password) {
       res.status(400).json({ error: 'Email and password are required.' });
       return;
@@ -61,9 +60,7 @@ export const registerAuthModule = (app: express.Express) => {
 
   app.get(`${API_PREFIX}/auth/me`, createJsonRoute((req, res) => {
     const auth = requireAuth(req, res);
-    if (!auth) {
-      return;
-    }
+    if (!auth) return;
 
     res.json({
       user: auth.user,

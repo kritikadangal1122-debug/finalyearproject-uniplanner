@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Resources — UniPlanner</title>
+  <link rel="stylesheet" href="css/theme.css" />
+  <script>window.tailwind={config:{theme:{extend:{colors:{primary:'var(--primary)',secondary:'var(--secondary)','text-primary':'var(--app-text-primary)','text-secondary':'var(--app-text-secondary)','text-muted':'var(--app-text-muted)','border-subtle':'var(--app-border-subtle)'}}}}}</script>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body>
+  <aside id="sidebar" class="sidebar closed"></aside>
+  <div id="sidebar-overlay" class="sidebar-overlay"></div>
+  <div class="main-content">
+    <header id="topbar" class="topbar"></header>
+    <main id="page-content" class="page-inner"></main>
+  </div>
+  <div id="toast-container" class="toast-container"></div>
+
+  <!-- Add resource modal -->
+  <div id="resource-modal" class="modal-overlay hidden">
+    <div class="modal-box">
+      <div class="mb-5 flex items-center justify-between">
+        <h3 class="text-lg font-semibold text-text-primary">Add Resource</h3>
+        <button id="resource-modal-close" class="btn-ghost p-1"><span class="material-symbols-outlined">close</span></button>
+      </div>
+      <form id="resource-form" class="space-y-3">
+        <input id="res-name" class="form-input" placeholder="File name (e.g. lecture-notes.pdf)" required />
+        <select id="res-class" class="form-input"></select>
+        <select id="res-type" class="form-input">
+          <option value="document">Document</option>
+          <option value="video">Video</option>
+          <option value="folder">Folder</option>
+          <option value="link">Link</option>
+        </select>
+        <input id="res-size" class="form-input" placeholder="Size (e.g. 2.4 MB)" />
+        <textarea id="res-preview" class="form-input" rows="2" placeholder="Description / preview text"></textarea>
+        <button type="submit" class="btn-primary w-full py-2.5">
+          <span class="material-symbols-outlined text-[16px]">upload</span> Add Resource
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initLayout, escHtml, viewPill, showToast } from './js/app.js';
+    import { getState, getCurrentRole, addResource, subscribe } from './js/store.js';
+
+    initLayout();
+    renderPage();
+    subscribe(renderPage);
+
+    function renderPage() {
+      const state = getState();
+      const role = getCurrentRole();
+      const canAdd = role === 'teacher' || role === 'admin';
+
+      const resClass = document.getElementById('res-class');
+      if (resClass) resClass.innerHTML = state.classes.map(c => `<option value="${c.id}">${escHtml(c.title)}</option>`).join('');
+
+      const typeIcon = { document: 'description', video: 'play_circle', folder: 'folder', link: 'link' };
+      const typeColor = { document: 'text-blue-400 bg-blue-500/20', video: 'text-violet-400 bg-violet-500/20', folder: 'text-amber-400 bg-amber-500/20', link: 'text-emerald-400 bg-emerald-500/20' };
+
+      document.getElementById('page-content').innerHTML = `
+        <div class="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h1 class="text-2xl font-semibold text-text-primary">Resources</h1>
+            <p class="text-sm text-text-secondary mt-1">${state.resources.length} files across all classes</p>
+          </div>
+          ${canAdd ? `<button id="add-resource-btn" class="btn-primary text-sm px-4 py-2 self-start"><span class="material-symbols-outlined text-[16px]">add</span> Add Resource</button>` : ''}
+        </div>
+
+        <!-- Search + filter -->
+        <div class="mb-5 flex flex-col gap-3 sm:flex-row">
+          <div class="relative flex-1 max-w-sm">
+            <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-text-muted text-[18px]">search</span>
+            <input id="search-input" class="form-input pl-9 text-sm" placeholder="Search resources..." />
+          </div>
+          <select id="class-filter" class="form-input max-w-xs text-sm">
+            <option value="">All classes</option>
+            ${state.classes.map(c => `<option value="${c.id}">${escHtml(c.title)}</option>`).join('')}
+          </select>
+          <select id="type-filter" class="form-input max-w-[140px] text-sm">
+            <option value="">All types</option>
+            <option value="document">Documents</option>
+            <option value="video">Videos</option>
+            <option value="folder">Folders</option>
+            <option value="link">Links</option>
+          </select>
+        </div>
+
+        <!-- Stats row -->
+        <div class="grid grid-cols-2 gap-3 sm:grid-cols-4 mb-6">
+          ${['document','video','folder','link'].map(type => {
+            const count = state.resources.filter(r => r.type === type).length;
+            return `
+              <div class="metric-card text-center">
+                <div class="mx-auto mb-2 h-10 w-10 rounded-xl flex items-center justify-center ${typeColor[type]}">
+                  <span class="material-symbols-outlined">${typeIcon[type]}</span>
+                </div>
+                <p class="text-2xl font-bold text-text-primary">${count}</p>
+                <p class="text-xs text-text-muted capitalize">${type}s</p>
+              </div>
+            `;
+          }).join('')}
+        </div>
+
+        <!-- Resources grid -->
+        <div id="resources-grid" class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          ${renderResourceCards(state.resources, state, typeIcon, typeColor, '')}
+        </div>
+      `;
+
+      document.getElementById('add-resource-btn')?.addEventListener('click', () => document.getElementById('resource-modal').classList.remove('hidden'));
+
+      const searchInput = document.getElementById('search-input');
+      const classFilter = document.getElementById('class-filter');
+      const typeFilter = document.getElementById('type-filter');
+
+      const applyFilter = () => {
+        const q = searchInput.value.toLowerCase();
+        const clsId = classFilter.value;
+        const type = typeFilter.value;
+        let filtered = state.resources;
+        if (q) filtered = filtered.filter(r => r.name.toLowerCase().includes(q) || r.preview.toLowerCase().includes(q));
+        if (clsId) filtered = filtered.filter(r => r.classId === clsId);
+        if (type) filtered = filtered.filter(r => r.type === type);
+        document.getElementById('resources-grid').innerHTML = renderResourceCards(filtered, state, typeIcon, typeColor, q);
+      };
+
+      searchInput?.addEventListener('input', applyFilter);
+      classFilter?.addEventListener('change', applyFilter);
+      typeFilter?.addEventListener('change', applyFilter);
+    }
+
+    function renderResourceCards(resources, state, typeIcon, typeColor, query) {
+      if (resources.length === 0) return '<p class="col-span-full text-sm text-text-secondary bg-black/10 rounded-xl p-8 text-center">No resources found.</p>';
+      return resources.map(r => {
+        const cls = state.classes.find(c => c.id === r.classId);
+        return `
+          <div class="metric-card flex flex-col gap-3">
+            <div class="flex items-start gap-3">
+              <div class="h-12 w-12 shrink-0 rounded-2xl flex items-center justify-center ${typeColor[r.type] ?? 'bg-white/10 text-text-muted'}">
+                <span class="material-symbols-outlined text-xl">${typeIcon[r.type] ?? 'insert_drive_file'}</span>
+              </div>
+              <div class="flex-1 min-w-0">
+                <p class="font-semibold text-text-primary truncate">${escHtml(r.name)}</p>
+                <p class="text-xs text-text-secondary mt-0.5">${escHtml(cls?.title ?? 'Unknown class')}</p>
+              </div>
+              <span class="view-pill shrink-0 capitalize">${r.type}</span>
+            </div>
+            <p class="text-sm text-text-secondary line-clamp-2">${escHtml(r.preview)}</p>
+            <div class="flex items-center justify-between text-xs text-text-muted border-t border-[var(--app-border-subtle)] pt-3">
+              <span>${escHtml(r.size)}</span>
+              <span>Updated ${escHtml(r.updatedAt)}</span>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // Modal
+    document.getElementById('resource-modal-close').addEventListener('click', () => document.getElementById('resource-modal').classList.add('hidden'));
+    document.getElementById('resource-modal').addEventListener('click', e => { if (e.target === e.currentTarget) e.currentTarget.classList.add('hidden'); });
+    document.getElementById('resource-form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const state = getState();
+      const resClass = document.getElementById('res-class');
+      if (resClass && !resClass.innerHTML) resClass.innerHTML = state.classes.map(c => `<option value="${c.id}">${escHtml(c.title)}</option>`).join('');
+      addResource({
+        name: document.getElementById('res-name').value,
+        classId: document.getElementById('res-class').value,
+        type: document.getElementById('res-type').value,
+        size: document.getElementById('res-size').value || '—',
+        preview: document.getElementById('res-preview').value,
+      });
+      document.getElementById('resource-modal').classList.add('hidden');
+      document.getElementById('resource-form').reset();
+      showToast('Resource added!', 'success');
+    });
+  </script>
+</body>
+</html>

@@ -1,13 +1,11 @@
-import type express from 'express';
 import { randomUUID } from 'crypto';
-import { store } from '../store';
-import { API_PREFIX, createJsonRoute, requireAuth, requireRole } from '../http';
+import { store } from '../store.js';
+import { API_PREFIX, createJsonRoute, requireAuth, requireRole } from '../http.js';
 
-export const registerEventsModule = (app: express.Express) => {
+export const registerEventsModule = (app) => {
   app.get(`${API_PREFIX}/events`, createJsonRoute((req, res) => {
     const auth = requireAuth(req, res);
     if (!auth) return;
-
     res.json({ events: store.getSnapshot().app.events });
   }));
 
@@ -18,7 +16,7 @@ export const registerEventsModule = (app: express.Express) => {
       return;
     }
 
-    const { title, classId, date, startTime, endTime, type } = req.body as { title?: string; classId?: string; date?: string; startTime?: string; endTime?: string; type?: any };
+    const { title, classId, date, startTime, endTime, type } = req.body;
     if (!title || !classId || !date || !startTime || !endTime || !type) {
       res.status(400).json({ error: 'Missing event fields.' });
       return;
@@ -33,7 +31,7 @@ export const registerEventsModule = (app: express.Express) => {
       endTime,
       type,
       color: '#888888',
-    } as any;
+    };
 
     store.update((draft) => {
       draft.app.events = [event, ...draft.app.events];

@@ -1,11 +1,9 @@
-import type express from 'express';
 import { randomUUID } from 'crypto';
-import { store } from '../store';
-import { API_PREFIX, requireAuth, requireRole } from '../http';
-import { upload, saveFileLocally, formatBytes } from '../upload';
+import { store } from '../store.js';
+import { API_PREFIX, requireAuth, requireRole } from '../http.js';
+import { upload, uploadToCloudinary, formatBytes } from '../upload.js';
 
-export const registerUploadModule = (app: express.Express) => {
-  // POST /api/upload/resource — teachers upload a file as a class resource
+export const registerUploadModule = (app) => {
   app.post(
     `${API_PREFIX}/upload/resource`,
     upload.single('file'),
@@ -17,24 +15,20 @@ export const registerUploadModule = (app: express.Express) => {
           return;
         }
 
-        const { classId, type, preview } = req.body as {
-          classId?: string;
-          type?: string;
-          preview?: string;
-        };
+        const { classId, type, preview } = req.body;
 
         if (!classId || !req.file) {
           res.status(400).json({ error: 'classId and a file are required.' });
           return;
         }
 
-        const result = saveFileLocally(req.file.buffer, req.file.originalname);
+        const result = await uploadToCloudinary(req.file.buffer, req.file.originalname);
 
         const resource = {
           id: `resource-${randomUUID()}`,
           classId,
           name: req.file.originalname,
-          type: (type as 'document' | 'video' | 'folder' | 'link') ?? 'document',
+          type: type ?? 'document',
           size: formatBytes(result.bytes),
           preview: preview ?? '',
           fileUrl: result.secure_url,
@@ -53,7 +47,6 @@ export const registerUploadModule = (app: express.Express) => {
     },
   );
 
-  // POST /api/upload/submission — students upload a file to submit an assignment
   app.post(
     `${API_PREFIX}/upload/submission`,
     upload.single('file'),
@@ -62,10 +55,7 @@ export const registerUploadModule = (app: express.Express) => {
         const auth = requireAuth(req, res);
         if (!auth) return;
 
-        const { assignmentId, contentText } = req.body as {
-          assignmentId?: string;
-          contentText?: string;
-        };
+        const { assignmentId, contentText } = req.body;
 
         if (!assignmentId || !req.file) {
           res.status(400).json({ error: 'assignmentId and a file are required.' });
@@ -78,7 +68,7 @@ export const registerUploadModule = (app: express.Express) => {
           return;
         }
 
-        const result = saveFileLocally(req.file.buffer, req.file.originalname);
+        const result = await uploadToCloudinary(req.file.buffer, req.file.originalname);
 
         const submission = {
           id: `submission-${randomUUID()}`,
@@ -111,7 +101,6 @@ export const registerUploadModule = (app: express.Express) => {
     },
   );
 
-  // DELETE /api/submissions/:submissionId — student removes their submission
   app.delete(`${API_PREFIX}/submissions/:submissionId`, (req, res) => {
     const auth = requireAuth(req, res);
     if (!auth) return;
@@ -142,7 +131,6 @@ export const registerUploadModule = (app: express.Express) => {
     res.json({ ok: true });
   });
 
-  // PATCH /api/submissions/:submissionId/grade — teacher grades a submission
   app.patch(`${API_PREFIX}/submissions/:submissionId/grade`, (req, res) => {
     const auth = requireAuth(req, res);
     if (!auth || !requireRole(auth, ['teacher', 'admin'])) {
@@ -151,7 +139,7 @@ export const registerUploadModule = (app: express.Express) => {
     }
 
     const { submissionId } = req.params;
-    const { score, feedback } = req.body as { score?: number; feedback?: string };
+    const { score, feedback } = req.body;
 
     if (score === undefined) {
       res.status(400).json({ error: 'score is required.' });

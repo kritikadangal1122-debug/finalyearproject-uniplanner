@@ -1,20 +1,16 @@
-import type { AiFeedbackResponse, AiQuizResponse, AiSummaryResponse, DiscussionSummaryResponse, QuizQuestion } from './types.ts';
-
-const splitSentences = (text: string) => text
+const splitSentences = (text) => text
   .replace(/\s+/g, ' ')
   .split(/(?<=[.!?])\s+/)
   .map((sentence) => sentence.trim())
   .filter(Boolean);
 
-const extractKeywords = (text: string) => {
-  const words = text
-    .toLowerCase()
-    .match(/[a-z]{5,}/g) ?? [];
+const extractKeywords = (text) => {
+  const words = text.toLowerCase().match(/[a-z]{5,}/g) ?? [];
   const unique = Array.from(new Set(words));
   return unique.slice(0, 6);
 };
 
-const buildQuestion = (sentence: string, index: number): QuizQuestion => {
+const buildQuestion = (sentence) => {
   const keywords = extractKeywords(sentence);
   const primary = keywords[0] ?? 'the concept';
   return {
@@ -24,7 +20,7 @@ const buildQuestion = (sentence: string, index: number): QuizQuestion => {
   };
 };
 
-export const summarizeText = (title: string, text: string): AiSummaryResponse => {
+export const summarizeText = (title, text) => {
   const sentences = splitSentences(text);
   const summary = sentences.slice(0, 2).join(' ') || text.slice(0, 240);
   const keywords = extractKeywords(text);
@@ -35,13 +31,15 @@ export const summarizeText = (title: string, text: string): AiSummaryResponse =>
     simpleExplanation: keywords.length
       ? `This content is mainly about ${keywords.join(', ')}.`
       : 'This content explains the core idea in a concise way.',
-    keyPoints: keywords.length ? keywords.map((keyword) => keyword.replace(/-/g, ' ')) : ['Review the full source', 'Capture one action item'],
+    keyPoints: keywords.length
+      ? keywords.map((keyword) => keyword.replace(/-/g, ' '))
+      : ['Review the full source', 'Capture one action item'],
   };
 };
 
-export const generateQuiz = (title: string, text: string, count = 3): AiQuizResponse => {
+export const generateQuiz = (title, text, count = 3) => {
   const sentences = splitSentences(text);
-  const questions = sentences.slice(0, count).map((sentence, index) => buildQuestion(sentence, index));
+  const questions = sentences.slice(0, count).map((sentence) => buildQuestion(sentence));
 
   while (questions.length < count) {
     questions.push({
@@ -51,13 +49,10 @@ export const generateQuiz = (title: string, text: string, count = 3): AiQuizResp
     });
   }
 
-  return {
-    title,
-    questions,
-  };
+  return { title, questions };
 };
 
-export const generateAssignmentFeedback = (submissionText: string, rubric: string[] = []): AiFeedbackResponse => {
+export const generateAssignmentFeedback = (submissionText, rubric = []) => {
   const wordCount = submissionText.trim().split(/\s+/).filter(Boolean).length;
   const score = Math.max(40, Math.min(98, Math.round(wordCount / 6)));
   const rubricFocus = rubric.length ? rubric.slice(0, 3) : ['clarity', 'evidence', 'structure'];
@@ -81,13 +76,15 @@ export const generateAssignmentFeedback = (submissionText: string, rubric: strin
   };
 };
 
-export const summarizeDiscussion = (title: string, messages: string[]): DiscussionSummaryResponse => {
+export const summarizeDiscussion = (title, messages) => {
   const combined = messages.join(' ');
   const keywords = extractKeywords(combined);
   return {
     title,
     summary: messages.slice(0, 3).join(' ') || 'No discussion content available yet.',
-    highlights: keywords.length ? keywords.map((keyword) => keyword.replace(/-/g, ' ')) : ['Clarify the main question', 'Add one example', 'Close the loop'],
+    highlights: keywords.length
+      ? keywords.map((keyword) => keyword.replace(/-/g, ' '))
+      : ['Clarify the main question', 'Add one example', 'Close the loop'],
     actionItems: [
       'Summarize unresolved questions at the top of the thread.',
       'Assign one follow-up response to the teacher or group lead.',

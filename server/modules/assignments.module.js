@@ -1,13 +1,11 @@
-import type express from 'express';
 import { randomUUID } from 'crypto';
-import { store } from '../store';
-import { API_PREFIX, createJsonRoute, requireAuth, requireRole } from '../http';
+import { store } from '../store.js';
+import { API_PREFIX, createJsonRoute, requireAuth, requireRole } from '../http.js';
 
-export const registerAssignmentsModule = (app: express.Express) => {
+export const registerAssignmentsModule = (app) => {
   app.get(`${API_PREFIX}/assignments`, createJsonRoute((req, res) => {
     const auth = requireAuth(req, res);
     if (!auth) return;
-
     res.json({ assignments: store.getSnapshot().app.assignments });
   }));
 
@@ -18,9 +16,7 @@ export const registerAssignmentsModule = (app: express.Express) => {
       return;
     }
 
-    const { classId, title, kind, dueDate, maxPoints, description } = req.body as {
-      classId?: string; title?: string; kind?: any; dueDate?: string; maxPoints?: number; description?: string;
-    };
+    const { classId, title, kind, dueDate, maxPoints, description } = req.body;
 
     if (!classId || !title || !kind || !dueDate || !maxPoints || !description) {
       res.status(400).json({ error: 'Missing assignment fields.' });
@@ -41,7 +37,7 @@ export const registerAssignmentsModule = (app: express.Express) => {
       aiPlagiarismScore: 0,
       description,
       rubric: ['Accuracy', 'Clarity', 'Timeliness'],
-    } as any;
+    };
 
     store.update((draft) => {
       draft.app.assignments = [assignment, ...draft.app.assignments];

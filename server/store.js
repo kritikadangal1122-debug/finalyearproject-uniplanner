@@ -1,16 +1,14 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
 import path from 'path';
 import { randomUUID } from 'crypto';
-import { createInitialState } from '../src/lib/lmsData.ts';
-import type { AppState, Assignment, Classroom, Role } from '../src/lib/types.ts';
-import type { AnalyticsEventRecord, BackendSnapshot, GoalRecord, PermissionRecord, PublicAppState, PublicSnapshot, SessionRecord, SubmissionRecord } from './types.ts';
-import { toPublicSnapshot } from './types.ts';
-import { scoreSubmissionQuality } from './learning.ts';
+import { createInitialState } from '../public/js/data.js';
+import { toPublicSnapshot } from './types.js';
+import { scoreSubmissionQuality } from './learning.js';
 
 const DATA_DIR = path.resolve(process.cwd(), 'server/data');
 const DATA_FILE = path.join(DATA_DIR, 'learning-os.json');
 
-const seedSubmissions = (app: AppState): SubmissionRecord[] => {
+const seedSubmissions = (app) => {
   const design = app.assignments.find((assignment) => assignment.id === 'assignment-1');
   const frontend = app.assignments.find((assignment) => assignment.id === 'assignment-2');
   const ops = app.assignments.find((assignment) => assignment.id === 'assignment-3');
@@ -61,7 +59,7 @@ const seedSubmissions = (app: AppState): SubmissionRecord[] => {
   }));
 };
 
-const seedGoals = (app: AppState): GoalRecord[] => app.users.map((user) => ({
+const seedGoals = (app) => app.users.map((user) => ({
   id: `goal-${user.id}`,
   userId: user.id,
   title: user.role === 'student'
@@ -76,7 +74,7 @@ const seedGoals = (app: AppState): GoalRecord[] => app.users.map((user) => ({
   status: 'active',
 }));
 
-const seedPermissions = (app: AppState): PermissionRecord[] => app.users.map((user) => ({
+const seedPermissions = (app) => app.users.map((user) => ({
   id: `perm-${user.id}-${user.role}`,
   userId: user.id,
   permissionKey: user.role === 'student' ? 'classroom:view' : user.role === 'teacher' ? 'classroom:manage' : 'platform:admin',
@@ -85,7 +83,7 @@ const seedPermissions = (app: AppState): PermissionRecord[] => app.users.map((us
   createdAt: '2026-05-06T00:00:00.000Z',
 }));
 
-const seedAnalyticsEvents = (app: AppState): AnalyticsEventRecord[] => [
+const seedAnalyticsEvents = (app) => [
   {
     id: 'event-class-opened',
     userId: app.users[0]?.id ?? 'user-student',
@@ -114,13 +112,10 @@ const seedAnalyticsEvents = (app: AppState): AnalyticsEventRecord[] => [
   },
 ];
 
-const createDefaultSnapshot = (): BackendSnapshot => {
+const createDefaultSnapshot = () => {
   const app = createInitialState();
   return {
-    app: {
-      ...app,
-      session: null,
-    },
+    app: { ...app, session: null },
     submissions: seedSubmissions(app),
     analyticsEvents: seedAnalyticsEvents(app),
     sessions: [],
@@ -129,32 +124,30 @@ const createDefaultSnapshot = (): BackendSnapshot => {
   };
 };
 
-const clone = <T>(value: T) => structuredClone(value);
+const clone = (value) => structuredClone(value);
 
 export class LearningStore {
-  private snapshot: BackendSnapshot;
-
   constructor() {
-    this.snapshot = this.load();
+    this.snapshot = this._load();
   }
 
-  private ensureFile() {
+  _ensureFile() {
     if (!existsSync(DATA_DIR)) {
       mkdirSync(DATA_DIR, { recursive: true });
     }
   }
 
-  private load(): BackendSnapshot {
+  _load() {
     try {
       if (!existsSync(DATA_FILE)) {
         const snapshot = createDefaultSnapshot();
-        this.ensureFile();
+        this._ensureFile();
         writeFileSync(DATA_FILE, JSON.stringify(snapshot, null, 2), 'utf8');
         return snapshot;
       }
 
       const raw = readFileSync(DATA_FILE, 'utf8');
-      const parsed = JSON.parse(raw) as Partial<BackendSnapshot>;
+      const parsed = JSON.parse(raw);
       const fallback = createDefaultSnapshot();
       return {
         app: {
@@ -173,8 +166,8 @@ export class LearningStore {
     }
   }
 
-  private save() {
-    this.ensureFile();
+  _save() {
+    this._ensureFile();
     writeFileSync(DATA_FILE, JSON.stringify(this.snapshot, null, 2), 'utf8');
   }
 
@@ -182,77 +175,74 @@ export class LearningStore {
     return clone(this.snapshot);
   }
 
-  getPublicSnapshot(): PublicSnapshot {
+  getPublicSnapshot() {
     return toPublicSnapshot(this.getSnapshot());
   }
 
-  update(mutator: (draft: BackendSnapshot) => void) {
+  update(mutator) {
     const draft = clone(this.snapshot);
     mutator(draft);
     this.snapshot = draft;
-    this.save();
+    this._save();
     return this.getSnapshot();
   }
 
-  replaceApp(nextApp: AppState) {
+  replaceApp(nextApp) {
     return this.update((draft) => {
-      draft.app = {
-        ...nextApp,
-        session: null,
-      };
+      draft.app = { ...nextApp, session: null };
     });
   }
 
-  recordSession(record: SessionRecord) {
+  recordSession(record) {
     return this.update((draft) => {
       draft.sessions = [record, ...draft.sessions.filter((session) => session.userId !== record.userId)];
     });
   }
 
-  revokeSession(token: string) {
+  revokeSession(token) {
     return this.update((draft) => {
       draft.sessions = draft.sessions.filter((session) => session.token !== token);
     });
   }
 
-  appendAnalyticsEvent(event: AnalyticsEventRecord) {
+  appendAnalyticsEvent(event) {
     return this.update((draft) => {
       draft.analyticsEvents = [event, ...draft.analyticsEvents];
     });
   }
 
-  addSubmission(submission: SubmissionRecord) {
+  addSubmission(submission) {
     return this.update((draft) => {
       draft.submissions = [submission, ...draft.submissions];
     });
   }
 
-  findUserByEmail(email: string) {
+  findUserByEmail(email) {
     return this.snapshot.app.users.find((user) => user.email.toLowerCase() === email.toLowerCase()) ?? null;
   }
 
-  findUserById(userId: string) {
+  findUserById(userId) {
     return this.snapshot.app.users.find((user) => user.id === userId) ?? null;
   }
 
-  findClassById(classId: string) {
+  findClassById(classId) {
     return this.snapshot.app.classes.find((item) => item.id === classId) ?? null;
   }
 
-  findAssignmentById(assignmentId: string) {
+  findAssignmentById(assignmentId) {
     return this.snapshot.app.assignments.find((item) => item.id === assignmentId) ?? null;
   }
 
-  isSessionActive(token: string) {
+  isSessionActive(token) {
     return this.snapshot.sessions.some((session) => session.token === token && session.expiresAt > Date.now());
   }
 
-  getSession(token: string) {
+  getSession(token) {
     return this.snapshot.sessions.find((session) => session.token === token) ?? null;
   }
 
-  createAnalyticsEvent(type: string, name: string, payload: Record<string, unknown>, userId: string, classId?: string) {
-    const event: AnalyticsEventRecord = {
+  createAnalyticsEvent(type, name, payload, userId, classId) {
+    const event = {
       id: `event-${randomUUID()}`,
       userId,
       classId,

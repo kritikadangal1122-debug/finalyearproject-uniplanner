@@ -1,14 +1,11 @@
-import type express from 'express';
 import { randomUUID } from 'crypto';
-import { store } from '../store';
-import { API_PREFIX, createJsonRoute, requireAuth } from '../http';
-import { mentionsFromMessage } from '../http';
+import { store } from '../store.js';
+import { API_PREFIX, createJsonRoute, requireAuth, mentionsFromMessage } from '../http.js';
 
-export const registerDiscussionsModule = (app: express.Express) => {
+export const registerDiscussionsModule = (app) => {
   app.get(`${API_PREFIX}/discussions/:classId`, createJsonRoute((req, res) => {
     const auth = requireAuth(req, res);
     if (!auth) return;
-
     res.json({ discussions: store.getSnapshot().app.discussions.filter((item) => item.classId === req.params.classId) });
   }));
 
@@ -16,7 +13,7 @@ export const registerDiscussionsModule = (app: express.Express) => {
     const auth = requireAuth(req, res);
     if (!auth) return;
 
-    const { classId, author, message, role } = req.body as { classId?: string; author?: string; message?: string; role?: any };
+    const { classId, author, message, role } = req.body;
     if (!classId || !author || !message || !role) {
       res.status(400).json({ error: 'Missing discussion fields.' });
       return;
@@ -32,7 +29,7 @@ export const registerDiscussionsModule = (app: express.Express) => {
       replies: 0,
       mentions: mentionsFromMessage(message),
       pinned: false,
-    } as any;
+    };
 
     store.update((draft) => {
       draft.app.discussions = [thread, ...draft.app.discussions];

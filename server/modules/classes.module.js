@@ -1,15 +1,12 @@
-import type express from 'express';
 import { randomUUID } from 'crypto';
-import { store } from '../store';
-import { API_PREFIX, createJsonRoute, createClassCode, classColor, requireAuth, requireRole, getCurrentSnapshot } from '../http';
+import { store } from '../store.js';
+import { API_PREFIX, createJsonRoute, createClassCode, classColor, requireAuth, requireRole, getCurrentSnapshot } from '../http.js';
 
-export const registerClassesModule = (app: express.Express) => {
+export const registerClassesModule = (app) => {
   app.get(`${API_PREFIX}/classes`, createJsonRoute((req, res) => {
     const auth = requireAuth(req, res);
     if (!auth) return;
-
-    const { classes } = getCurrentSnapshot().app;
-    res.json({ classes });
+    res.json({ classes: getCurrentSnapshot().app.classes });
   }));
 
   app.post(`${API_PREFIX}/classes`, createJsonRoute((req, res) => {
@@ -19,7 +16,7 @@ export const registerClassesModule = (app: express.Express) => {
       return;
     }
 
-    const { title, subject, section, description } = req.body as { title?: string; subject?: string; section?: string; description?: string };
+    const { title, subject, section, description } = req.body;
     if (!title || !subject || !section || !description) {
       res.status(400).json({ error: 'All class fields are required.' });
       return;
@@ -45,7 +42,7 @@ export const registerClassesModule = (app: express.Express) => {
         sections: [{ id: `section-${randomUUID()}`, name: section, studentCount: 0 }],
         resourceCount: 0,
         unreadMessages: 0,
-      } as any;
+      };
 
       draft.app.classes = [classroom, ...draft.app.classes];
       draft.app.notifications = [
@@ -94,7 +91,7 @@ export const registerClassesModule = (app: express.Express) => {
     const auth = requireAuth(req, res);
     if (!auth) return;
 
-    const { code } = req.body as { code?: string };
+    const { code } = req.body;
     if (!code) {
       res.status(400).json({ error: 'Class code is required.' });
       return;

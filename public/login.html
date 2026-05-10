@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sign in — UniPlanner</title>
+  <link rel="stylesheet" href="css/theme.css" />
+  <script>
+    window.tailwind = { config: { theme: { extend: { colors: {
+      primary: 'var(--primary)', secondary: 'var(--secondary)',
+      'text-primary': 'var(--app-text-primary)', 'text-secondary': 'var(--app-text-secondary)',
+      'text-muted': 'var(--app-text-muted)', 'border-subtle': 'var(--app-border-subtle)',
+    }}}}};
+  </script>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="min-h-screen">
+  <div class="mx-auto grid min-h-screen max-w-7xl gap-4 px-3 py-4 sm:gap-6 sm:px-6 sm:py-8 lg:grid-cols-[1.1fr_0.9fr] lg:px-10 lg:py-8"
+       style="background:radial-gradient(circle at top left,rgba(59,130,246,.18),transparent 35%),radial-gradient(circle at top right,rgba(99,102,241,.16),transparent 30%),linear-gradient(180deg,#020617,#0f172a 45%,#111827)">
+
+    <!-- Left: Hero panel -->
+    <section class="relative overflow-hidden rounded-2xl border border-white/10 bg-white/[0.04] p-5 shadow-2xl backdrop-blur-2xl sm:rounded-3xl sm:p-8 lg:p-12">
+      <div class="absolute inset-0" style="background:linear-gradient(135deg,rgba(255,255,255,.08),transparent 40%)"></div>
+      <div class="relative z-10 flex h-full flex-col justify-between gap-6">
+        <div class="space-y-4">
+          <div class="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-text-secondary">
+            <span class="material-symbols-outlined text-[14px] text-amber-400">auto_awesome</span>
+            UniPlanner for modern classrooms
+          </div>
+          <h1 class="text-4xl font-semibold tracking-tight text-white sm:text-5xl lg:text-6xl">
+            Classroom software that actually moves faster than the work.
+          </h1>
+          <p class="max-w-xl text-base leading-7 text-white/60 sm:text-lg">
+            A role-aware LMS for students, teachers, and administrators with real CRUD, live collaboration, analytics, scheduling, and persistent preferences.
+          </p>
+          <div class="grid gap-3 sm:grid-cols-3">
+            <div class="rounded-2xl border border-white/10 bg-white/5 p-4">
+              <p class="text-[10px] uppercase tracking-widest text-white/40">Role access</p>
+              <p class="mt-2 text-lg font-semibold text-white">JWT-ready sessions</p>
+            </div>
+            <div class="rounded-2xl border border-white/10 bg-white/5 p-4">
+              <p class="text-[10px] uppercase tracking-widest text-white/40">Workflow</p>
+              <p class="mt-2 text-lg font-semibold text-white">Assignments, chat, files</p>
+            </div>
+            <div class="rounded-2xl border border-white/10 bg-white/5 p-4">
+              <p class="text-[10px] uppercase tracking-widest text-white/40">UX</p>
+              <p class="mt-2 text-lg font-semibold text-white">Dark, light, mobile-first</p>
+            </div>
+          </div>
+        </div>
+        <div class="grid gap-3 sm:grid-cols-3">
+          <div class="rounded-2xl border border-white/10 bg-black/20 p-4">
+            <p class="text-sm text-white/40">Active classes</p>
+            <p class="mt-1 text-2xl font-semibold text-white">12</p>
+          </div>
+          <div class="rounded-2xl border border-white/10 bg-black/20 p-4">
+            <p class="text-sm text-white/40">Completion rate</p>
+            <p class="mt-1 text-2xl font-semibold text-white">92%</p>
+          </div>
+          <div class="rounded-2xl border border-white/10 bg-black/20 p-4">
+            <p class="text-sm text-white/40">Live updates</p>
+            <p class="mt-1 text-2xl font-semibold text-white">Realtime</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Right: Sign-in form -->
+    <section class="flex items-center justify-center">
+      <div class="w-full max-w-xl rounded-2xl border border-white/10 p-5 shadow-2xl backdrop-blur-2xl sm:rounded-3xl sm:p-7 lg:p-9" style="background:var(--panel)">
+        <div class="mb-6 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p class="text-[10px] uppercase tracking-widest text-text-muted">Sign in</p>
+            <h2 class="mt-1 text-2xl font-semibold text-text-primary sm:text-3xl">Access your workspace</h2>
+          </div>
+          <div class="rounded-2xl border border-[var(--app-border-subtle)] bg-white/5 p-2.5">
+            <span class="material-symbols-outlined text-primary">lock</span>
+          </div>
+        </div>
+
+        <form id="login-form" class="space-y-4">
+          <div>
+            <label class="mb-1.5 block text-sm font-medium text-text-secondary" for="email">Email</label>
+            <input id="email" type="email" value="alex@uniplanner.dev" placeholder="alex@uniplanner.dev"
+              class="form-input text-base" required />
+          </div>
+          <div>
+            <label class="mb-1.5 block text-sm font-medium text-text-secondary" for="password">Password</label>
+            <input id="password" type="password" value="classroom123!" placeholder="classroom123!"
+              class="form-input text-base" required />
+          </div>
+
+          <div id="login-error" class="hidden flex items-start gap-2 rounded-xl border border-red-500/20 bg-red-500/10 p-3 text-sm text-red-200">
+            <span class="material-symbols-outlined text-[18px] shrink-0">error</span>
+            <span id="login-error-msg"></span>
+          </div>
+
+          <button type="submit" id="login-btn" class="btn-primary w-full py-3 text-base">
+            <span id="login-btn-text">Open workspace</span>
+            <span class="material-symbols-outlined text-[18px]">login</span>
+          </button>
+        </form>
+
+        <div class="mt-5 space-y-3">
+          <p class="text-xs text-text-secondary">Quick demo access</p>
+          <div class="grid gap-2 sm:grid-cols-3">
+            <button class="quick-btn rounded-xl border border-[var(--app-border-subtle)] bg-white/5 px-3 py-2.5 text-left transition hover:border-blue-500/40 hover:bg-blue-500/10"
+              data-email="alex@uniplanner.dev">
+              <p class="text-[9px] uppercase tracking-widest text-text-muted">Student</p>
+              <p class="mt-0.5 text-sm font-semibold text-text-primary">alex@uniplanner.dev</p>
+            </button>
+            <button class="quick-btn rounded-xl border border-[var(--app-border-subtle)] bg-white/5 px-3 py-2.5 text-left transition hover:border-emerald-500/40 hover:bg-emerald-500/10"
+              data-email="sarah@uniplanner.dev">
+              <p class="text-[9px] uppercase tracking-widest text-text-muted">Teacher</p>
+              <p class="mt-0.5 text-sm font-semibold text-text-primary">sarah@uniplanner.dev</p>
+            </button>
+            <button class="quick-btn rounded-xl border border-[var(--app-border-subtle)] bg-white/5 px-3 py-2.5 text-left transition hover:border-violet-500/40 hover:bg-violet-500/10"
+              data-email="admin@uniplanner.dev">
+              <p class="text-[9px] uppercase tracking-widest text-text-muted">Admin</p>
+              <p class="mt-0.5 text-sm font-semibold text-text-primary">admin@uniplanner.dev</p>
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script type="module">
+    import { signIn, initStore } from './js/store.js';
+    import { redirectIfAuth } from './js/app.js';
+
+    initStore();
+    redirectIfAuth();
+
+    document.querySelectorAll('.quick-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.getElementById('email').value = btn.dataset.email;
+        document.getElementById('password').value = 'classroom123!';
+      });
+    });
+
+    document.getElementById('login-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = document.getElementById('login-btn');
+      const btnText = document.getElementById('login-btn-text');
+      const errEl = document.getElementById('login-error');
+      const errMsg = document.getElementById('login-error-msg');
+
+      btn.disabled = true;
+      btnText.textContent = 'Signing in...';
+      errEl.classList.add('hidden');
+
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+      const result = await signIn(email, password);
+
+      if (result.ok) {
+        window.location.href = 'dashboard.html';
+      } else {
+        errMsg.textContent = result.error ?? 'Unable to sign in.';
+        errEl.classList.remove('hidden');
+        btn.disabled = false;
+        btnText.textContent = 'Open workspace';
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin — UniPlanner</title>
+  <link rel="stylesheet" href="css/theme.css" />
+  <script>window.tailwind={config:{theme:{extend:{colors:{primary:'var(--primary)',secondary:'var(--secondary)','text-primary':'var(--app-text-primary)','text-secondary':'var(--app-text-secondary)','text-muted':'var(--app-text-muted)','border-subtle':'var(--app-border-subtle)'}}}}}</script>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body>
+  <aside id="sidebar" class="sidebar closed"></aside>
+  <div id="sidebar-overlay" class="sidebar-overlay"></div>
+  <div class="main-content">
+    <header id="topbar" class="topbar"></header>
+    <main id="page-content" class="page-inner"></main>
+  </div>
+  <div id="toast-container" class="toast-container"></div>
+
+  <!-- Create user modal -->
+  <div id="create-user-modal" class="modal-overlay hidden">
+    <div class="modal-box">
+      <div class="mb-5 flex items-center justify-between">
+        <h3 class="text-lg font-semibold text-text-primary">Create User</h3>
+        <button id="create-user-close" class="btn-ghost p-1"><span class="material-symbols-outlined">close</span></button>
+      </div>
+      <form id="create-user-form" class="space-y-3">
+        <input id="cu-name" class="form-input" placeholder="Full name" required />
+        <input id="cu-email" class="form-input" type="email" placeholder="Email address" required />
+        <input id="cu-password" class="form-input" type="password" placeholder="Password" required />
+        <select id="cu-role" class="form-input">
+          <option value="student">Student</option>
+          <option value="teacher">Teacher</option>
+          <option value="admin">Admin</option>
+        </select>
+        <input id="cu-title" class="form-input" placeholder="Title (optional)" />
+        <textarea id="cu-bio" class="form-input" rows="2" placeholder="Bio (optional)"></textarea>
+        <input id="cu-avatar" class="form-input" placeholder="Avatar URL (optional)" />
+        <button type="submit" class="btn-primary w-full py-2.5">
+          <span class="material-symbols-outlined text-[16px]">person_add</span> Create User
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Edit user modal -->
+  <div id="edit-user-modal" class="modal-overlay hidden">
+    <div class="modal-box">
+      <div class="mb-5 flex items-center justify-between">
+        <h3 class="text-lg font-semibold text-text-primary">Edit User</h3>
+        <button id="edit-user-close" class="btn-ghost p-1"><span class="material-symbols-outlined">close</span></button>
+      </div>
+      <form id="edit-user-form" class="space-y-3">
+        <input id="eu-id" type="hidden" />
+        <div class="flex items-center gap-3">
+          <img id="eu-avatar-preview" src="" alt="" class="h-14 w-14 rounded-2xl object-cover border border-[var(--app-border-subtle)]" onerror="this.style.opacity='0.3'" />
+          <input id="eu-avatar" class="form-input flex-1" placeholder="Avatar URL" />
+        </div>
+        <input id="eu-name" class="form-input" placeholder="Full name" />
+        <input id="eu-email" class="form-input" type="email" placeholder="Email" />
+        <input id="eu-title" class="form-input" placeholder="Title" />
+        <textarea id="eu-bio" class="form-input" rows="2" placeholder="Bio"></textarea>
+        <select id="eu-role" class="form-input">
+          <option value="student">Student</option>
+          <option value="teacher">Teacher</option>
+          <option value="admin">Admin</option>
+        </select>
+        <button type="submit" class="btn-primary w-full py-2.5">
+          <span class="material-symbols-outlined text-[16px]">save</span> Save Changes
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Edit class modal -->
+  <div id="edit-class-modal" class="modal-overlay hidden">
+    <div class="modal-box">
+      <div class="mb-5 flex items-center justify-between">
+        <h3 class="text-lg font-semibold text-text-primary">Edit Class</h3>
+        <button id="edit-class-close" class="btn-ghost p-1"><span class="material-symbols-outlined">close</span></button>
+      </div>
+      <form id="edit-class-form" class="space-y-3">
+        <input id="ec-id" type="hidden" />
+        <input id="ec-title" class="form-input" placeholder="Class title" required />
+        <input id="ec-subject" class="form-input" placeholder="Subject" />
+        <input id="ec-section" class="form-input" placeholder="Section" />
+        <textarea id="ec-desc" class="form-input" rows="2" placeholder="Description"></textarea>
+        <button type="submit" class="btn-primary w-full py-2.5">Save Changes</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Edit assignment modal -->
+  <div id="edit-assign-modal" class="modal-overlay hidden">
+    <div class="modal-box">
+      <div class="mb-5 flex items-center justify-between">
+        <h3 class="text-lg font-semibold text-text-primary">Edit Assignment</h3>
+        <button id="edit-assign-close" class="btn-ghost p-1"><span class="material-symbols-outlined">close</span></button>
+      </div>
+      <form id="edit-assign-form" class="space-y-3">
+        <input id="ea-id" type="hidden" />
+        <input id="ea-title" class="form-input" placeholder="Title" required />
+        <select id="ea-kind" class="form-input">
+          <option value="assignment">Assignment</option>
+          <option value="quiz">Quiz</option>
+          <option value="project">Project</option>
+        </select>
+        <div>
+          <label class="text-xs text-text-muted mb-1 block">Due date</label>
+          <input id="ea-due" class="form-input" type="date" />
+        </div>
+        <input id="ea-points" class="form-input" type="number" placeholder="Max points" min="1" />
+        <textarea id="ea-desc" class="form-input" rows="2" placeholder="Description"></textarea>
+        <input id="ea-attachment" class="form-input" placeholder="Attachment URL (optional)" />
+        <button type="submit" class="btn-primary w-full py-2.5">Save Changes</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Assign subjects drawer -->
+  <div id="assign-subjects-backdrop" class="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm hidden" style="transition:opacity 0.25s ease;opacity:0"></div>
+  <div id="assign-subjects-drawer" class="fixed inset-y-0 right-0 z-50 flex w-full max-w-sm flex-col border-l border-[var(--app-border-subtle)] bg-[var(--panel)] shadow-2xl" style="transform:translateX(100%);transition:transform 0.3s cubic-bezier(.4,0,.2,1)">
+    <!-- Header -->
+    <div class="flex items-center justify-between border-b border-[var(--app-border-subtle)] px-5 py-4">
+      <div class="min-w-0">
+        <h3 class="text-base font-semibold text-[var(--app-text-primary)]">Assign Subjects</h3>
+        <p id="assign-subjects-teacher-name" class="mt-0.5 truncate text-xs text-[var(--app-text-secondary)]"></p>
+      </div>
+      <button id="assign-subjects-close" class="btn-ghost ml-3 shrink-0 p-1.5">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+    </div>
+
+    <!-- Scrollable body -->
+    <div class="flex flex-1 flex-col gap-5 overflow-y-auto px-5 py-5">
+
+      <!-- Currently assigned -->
+      <div>
+        <p class="mb-2 text-xs font-semibold uppercase tracking-widest text-[var(--app-text-muted)]">Assigned</p>
+        <div id="assign-subjects-list" class="flex min-h-[2.5rem] flex-wrap gap-2"></div>
+      </div>
+
+      <!-- Existing subjects from classes -->
+      <div>
+        <p class="mb-2 text-xs font-semibold uppercase tracking-widest text-[var(--app-text-muted)]">Available Subjects</p>
+        <p class="mb-3 text-xs text-[var(--app-text-secondary)]">Tap a subject to add or remove it.</p>
+        <div id="subjects-suggestions" class="flex flex-wrap gap-2"></div>
+      </div>
+
+      <!-- Custom subject input -->
+      <div>
+        <p class="mb-2 text-xs font-semibold uppercase tracking-widest text-[var(--app-text-muted)]">Add Custom Subject</p>
+        <div class="flex gap-2">
+          <input id="new-subject-input" class="form-input flex-1 text-sm" placeholder="e.g. Mathematics…" />
+          <button id="add-subject-btn" class="btn-ghost shrink-0 px-3">
+            <span class="material-symbols-outlined text-[18px]">add</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="border-t border-[var(--app-border-subtle)] px-5 py-4">
+      <button id="save-subjects-btn" class="btn-primary w-full py-2.5">
+        <span class="material-symbols-outlined text-[16px]">save</span> Save Subjects
+      </button>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initLayout, escHtml, showToast, requireRole } from './js/app.js';
+    import { getState, getCurrentUser, createUser, updateUser, deleteUser, updateUserRole, updateUserSubjects, updateClassroom, updateAssignment, subscribe } from './js/store.js';
+
+    if (requireRole(['admin'])) {
+    initLayout();
+
+    let adminTab = 'users';
+
+    renderPage();
+    subscribe(renderPage);
+
+    function renderPage() {
+      const state = getState();
+      const me = getCurrentUser();
+
+      document.getElementById('page-content').innerHTML = `
+        <!-- Admin tabs -->
+        <div class="mb-6 flex gap-1 rounded-2xl border border-[var(--app-border-subtle)] bg-white/5 p-1 w-fit">
+          ${['users','classes','assignments'].map(tab => `
+            <button class="admin-tab-btn rounded-xl px-4 py-1.5 text-sm font-medium transition ${tab === adminTab ? 'bg-primary text-white' : 'text-text-secondary hover:text-text-primary'}" data-tab="${tab}">
+              ${tab.charAt(0).toUpperCase() + tab.slice(1)}
+            </button>
+          `).join('')}
+        </div>
+
+        <!-- Users tab -->
+        <div id="tab-users" class="${adminTab !== 'users' ? 'hidden' : ''}">
+          <div class="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <p class="text-sm text-text-secondary">${state.users.length} registered users</p>
+            <button id="create-user-btn" class="btn-primary text-sm px-4 py-2 self-start">
+              <span class="material-symbols-outlined text-[16px]">person_add</span> New User
+            </button>
+          </div>
+          <div class="mb-5 flex flex-col gap-3 sm:flex-row">
+            <div class="relative flex-1 max-w-sm">
+              <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-text-muted text-[18px]">search</span>
+              <input id="user-search" class="form-input pl-9 text-sm" placeholder="Search by name or email..." />
+            </div>
+            <select id="role-filter" class="form-input max-w-[140px] text-sm">
+              <option value="all">All roles</option>
+              <option value="student">Students</option>
+              <option value="teacher">Teachers</option>
+              <option value="admin">Admins</option>
+            </select>
+          </div>
+          <div class="metric-card overflow-hidden p-0">
+            <div class="overflow-x-auto">
+              <table class="w-full text-sm">
+                <thead>
+                  <tr class="border-b border-[var(--app-border-subtle)]">
+                    <th class="px-4 py-3 text-left text-xs uppercase tracking-widest text-text-muted">User</th>
+                    <th class="px-4 py-3 text-left text-xs uppercase tracking-widest text-text-muted">Email</th>
+                    <th class="px-4 py-3 text-left text-xs uppercase tracking-widest text-text-muted">Role</th>
+                    <th class="px-4 py-3 text-left text-xs uppercase tracking-widest text-text-muted hidden sm:table-cell">Subjects</th>
+                    <th class="px-4 py-3 text-left text-xs uppercase tracking-widest text-text-muted hidden sm:table-cell">XP</th>
+                    <th class="px-4 py-3 text-right text-xs uppercase tracking-widest text-text-muted">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="users-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Classes tab -->
+        <div id="tab-classes" class="${adminTab !== 'classes' ? 'hidden' : ''}">
+          <p class="text-sm text-text-secondary mb-5">${state.classes.length} classes</p>
+          <div class="space-y-3" id="classes-admin-list">
+            ${state.classes.map(c => `
+              <div class="metric-card flex items-start justify-between gap-4">
+                <div class="flex items-center gap-3 min-w-0">
+                  <div class="h-10 w-10 shrink-0 rounded-xl shadow" style="background:${c.color}"></div>
+                  <div class="min-w-0">
+                    <p class="font-semibold text-text-primary truncate">${escHtml(c.title)}</p>
+                    <p class="text-xs text-text-secondary">${escHtml(c.subject)} · ${escHtml(c.section)}</p>
+                    <p class="text-xs text-text-muted mt-0.5">${c.enrolledStudentIds.length} learner${c.enrolledStudentIds.length !== 1 ? 's' : ''} · Code: ${escHtml(c.code)}</p>
+                  </div>
+                </div>
+                <button class="edit-class-btn btn-ghost p-1.5 shrink-0" data-id="${c.id}" title="Edit class">
+                  <span class="material-symbols-outlined text-[18px]">edit</span>
+                </button>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+
+        <!-- Assignments tab -->
+        <div id="tab-assignments" class="${adminTab !== 'assignments' ? 'hidden' : ''}">
+          <p class="text-sm text-text-secondary mb-5">${state.assignments.length} assignments</p>
+          <div class="space-y-3">
+            ${state.assignments.map(a => {
+              const cls = state.classes.find(c => c.id === a.classId);
+              return `
+              <div class="metric-card flex items-start justify-between gap-4">
+                <div class="min-w-0 flex-1">
+                  <p class="font-semibold text-text-primary">${escHtml(a.title)}</p>
+                  <p class="text-xs text-text-secondary mt-0.5">${escHtml(cls?.title ?? 'Unknown class')} · ${a.kind}</p>
+                  <p class="text-xs text-text-muted mt-0.5">${a.dueDate ? escHtml(a.dueDate) + ' · ' : ''}${a.maxPoints} pts</p>
+                </div>
+                <button class="edit-assign-btn btn-ghost p-1.5 shrink-0" data-id="${a.id}" title="Edit assignment">
+                  <span class="material-symbols-outlined text-[18px]">edit</span>
+                </button>
+              </div>`;
+            }).join('')}
+          </div>
+        </div>
+      `;
+
+      // Tab switching
+      document.querySelectorAll('.admin-tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          adminTab = btn.dataset.tab;
+          document.querySelectorAll('.admin-tab-btn').forEach(b => {
+            b.className = b.className.replace('bg-primary text-white', 'text-text-secondary hover:text-text-primary');
+          });
+          btn.className = btn.className.replace('text-text-secondary hover:text-text-primary', 'bg-primary text-white');
+          ['users','classes','assignments'].forEach(t => {
+            document.getElementById(`tab-${t}`)?.classList.toggle('hidden', t !== adminTab);
+          });
+        });
+      });
+
+      document.getElementById('create-user-btn')?.addEventListener('click', () => {
+        document.getElementById('create-user-modal').classList.remove('hidden');
+      });
+
+      document.getElementById('user-search')?.addEventListener('input', renderUsers);
+      document.getElementById('role-filter')?.addEventListener('change', renderUsers);
+
+      document.querySelectorAll('.edit-class-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const c = getState().classes.find(x => x.id === btn.dataset.id);
+          if (!c) return;
+          document.getElementById('ec-id').value = c.id;
+          document.getElementById('ec-title').value = c.title;
+          document.getElementById('ec-subject').value = c.subject;
+          document.getElementById('ec-section').value = c.section;
+          document.getElementById('ec-desc').value = c.description ?? '';
+          document.getElementById('edit-class-modal').classList.remove('hidden');
+        });
+      });
+
+      document.querySelectorAll('.edit-assign-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const a = getState().assignments.find(x => x.id === btn.dataset.id);
+          if (!a) return;
+          document.getElementById('ea-id').value = a.id;
+          document.getElementById('ea-title').value = a.title;
+          document.getElementById('ea-kind').value = a.kind;
+          document.getElementById('ea-due').value = a.dueDate || '';
+          document.getElementById('ea-points').value = a.maxPoints;
+          document.getElementById('ea-desc').value = a.description ?? '';
+          document.getElementById('ea-attachment').value = a.attachmentUrl ?? '';
+          document.getElementById('edit-assign-modal').classList.remove('hidden');
+        });
+      });
+
+      renderUsers();
+    }
+
+    function renderUsers() {
+      const state = getState();
+      const me = getCurrentUser();
+      const q = (document.getElementById('user-search')?.value ?? '').toLowerCase();
+      const roleFilter = document.getElementById('role-filter')?.value ?? 'all';
+
+      let users = state.users;
+      if (q) users = users.filter(u => u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q));
+      if (roleFilter !== 'all') users = users.filter(u => u.role === roleFilter);
+
+      const tbody = document.getElementById('users-tbody');
+      if (!tbody) return;
+
+      if (users.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="px-4 py-8 text-center text-sm text-text-secondary">No users match the search.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = users.map(u => `
+        <tr class="border-b border-[var(--app-border-subtle)] hover:bg-white/[0.03] transition">
+          <td class="px-4 py-3">
+            <div class="flex items-center gap-3">
+              <img src="${escHtml(u.avatar ?? '')}" alt="${escHtml(u.name)}" class="h-9 w-9 rounded-xl object-cover shrink-0 border border-[var(--app-border-subtle)]" onerror="this.style.opacity='0.3'" />
+              <div class="min-w-0">
+                <p class="font-medium text-text-primary truncate">${escHtml(u.name)}</p>
+                ${u.title ? `<p class="text-xs text-text-muted truncate">${escHtml(u.title)}</p>` : ''}
+              </div>
+            </div>
+          </td>
+          <td class="px-4 py-3 text-text-secondary truncate max-w-[180px]">${escHtml(u.email)}</td>
+          <td class="px-4 py-3">
+            <select class="role-select rounded-lg border border-[var(--app-border-subtle)] bg-transparent px-2 py-1 text-xs focus:border-blue-500/40 outline-none" data-id="${u.id}">
+              ${['student','teacher','admin'].map(r => `<option value="${r}" ${u.role === r ? 'selected' : ''}>${r.charAt(0).toUpperCase()+r.slice(1)}</option>`).join('')}
+            </select>
+          </td>
+          <td class="px-4 py-3 hidden sm:table-cell">
+            ${u.role === 'teacher' ? `
+              <div class="flex flex-wrap gap-1">
+                ${(u.assignedSubjects ?? []).map(s => `<span class="inline-block rounded-full bg-blue-500/10 px-2 py-0.5 text-[10px] font-medium text-blue-300">${escHtml(s)}</span>`).join('')}
+                <button class="assign-subjects-btn inline-flex items-center gap-0.5 rounded-full border border-[var(--app-border-subtle)] bg-transparent px-2 py-0.5 text-[10px] text-text-muted hover:text-text-primary hover:border-blue-500/40 transition" data-id="${u.id}" title="Assign subjects">
+                  <span class="material-symbols-outlined text-[11px]">edit</span>
+                </button>
+              </div>
+            ` : '<span class="text-xs text-text-muted">—</span>'}
+          </td>
+          <td class="px-4 py-3 text-text-secondary hidden sm:table-cell">${(u.xp ?? 0).toLocaleString()}</td>
+          <td class="px-4 py-3">
+            <div class="flex items-center justify-end gap-1">
+              <button class="edit-user-btn btn-ghost p-1.5" data-id="${u.id}" title="Edit">
+                <span class="material-symbols-outlined text-[16px]">edit</span>
+              </button>
+              ${u.id !== me?.id ? `
+                <button class="delete-user-btn btn-ghost p-1.5 hover:bg-red-500/10 hover:text-red-400" data-id="${u.id}" title="Delete">
+                  <span class="material-symbols-outlined text-[16px]">delete</span>
+                </button>
+              ` : '<span class="px-1.5 text-xs text-text-muted">(you)</span>'}
+            </div>
+          </td>
+        </tr>
+      `).join('');
+
+      document.querySelectorAll('.role-select').forEach(sel => {
+        sel.addEventListener('change', () => {
+          updateUserRole(sel.dataset.id, sel.value);
+          showToast('Role updated.', 'success');
+        });
+      });
+
+      document.querySelectorAll('.edit-user-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const user = getState().users.find(u => u.id === btn.dataset.id);
+          if (!user) return;
+          document.getElementById('eu-id').value = user.id;
+          document.getElementById('eu-name').value = user.name;
+          document.getElementById('eu-email').value = user.email;
+          document.getElementById('eu-title').value = user.title ?? '';
+          document.getElementById('eu-bio').value = user.bio ?? '';
+          document.getElementById('eu-role').value = user.role;
+          document.getElementById('eu-avatar').value = user.avatar ?? '';
+          document.getElementById('eu-avatar-preview').src = user.avatar ?? '';
+          document.getElementById('edit-user-modal').classList.remove('hidden');
+        });
+      });
+
+      document.querySelectorAll('.delete-user-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const user = getState().users.find(u => u.id === btn.dataset.id);
+          if (confirm(`Delete ${user?.name ?? 'this user'}? This cannot be undone.`)) {
+            deleteUser(btn.dataset.id);
+            showToast('User deleted.', 'info');
+          }
+        });
+      });
+
+      document.querySelectorAll('.assign-subjects-btn').forEach(btn => {
+        btn.addEventListener('click', () => openSubjectsDrawer(btn.dataset.id));
+      });
+    }
+
+    // Avatar URL preview on input
+    document.getElementById('eu-avatar')?.addEventListener('input', (e) => {
+      document.getElementById('eu-avatar-preview').src = e.target.value;
+    });
+
+    // Modals
+    document.getElementById('create-user-close').addEventListener('click', () => document.getElementById('create-user-modal').classList.add('hidden'));
+    document.getElementById('edit-user-close').addEventListener('click', () => document.getElementById('edit-user-modal').classList.add('hidden'));
+    document.getElementById('edit-class-close').addEventListener('click', () => document.getElementById('edit-class-modal').classList.add('hidden'));
+    document.getElementById('edit-assign-close').addEventListener('click', () => document.getElementById('edit-assign-modal').classList.add('hidden'));
+
+    document.getElementById('create-user-modal').addEventListener('click', e => { if (e.target === e.currentTarget) e.currentTarget.classList.add('hidden'); });
+    document.getElementById('edit-user-modal').addEventListener('click', e => { if (e.target === e.currentTarget) e.currentTarget.classList.add('hidden'); });
+    document.getElementById('edit-class-modal').addEventListener('click', e => { if (e.target === e.currentTarget) e.currentTarget.classList.add('hidden'); });
+    document.getElementById('edit-assign-modal').addEventListener('click', e => { if (e.target === e.currentTarget) e.currentTarget.classList.add('hidden'); });
+
+    document.getElementById('create-user-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      await createUser({
+        name: document.getElementById('cu-name').value,
+        email: document.getElementById('cu-email').value,
+        password: document.getElementById('cu-password').value,
+        role: document.getElementById('cu-role').value,
+        title: document.getElementById('cu-title').value,
+        bio: document.getElementById('cu-bio').value,
+        avatar: document.getElementById('cu-avatar').value.trim(),
+      });
+      document.getElementById('create-user-modal').classList.add('hidden');
+      document.getElementById('create-user-form').reset();
+      showToast('User created!', 'success');
+    });
+
+    document.getElementById('edit-user-form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      updateUser({
+        userId: document.getElementById('eu-id').value,
+        name: document.getElementById('eu-name').value,
+        email: document.getElementById('eu-email').value,
+        title: document.getElementById('eu-title').value,
+        bio: document.getElementById('eu-bio').value,
+        role: document.getElementById('eu-role').value,
+        avatar: document.getElementById('eu-avatar').value.trim(),
+      });
+      document.getElementById('edit-user-modal').classList.add('hidden');
+      showToast('User updated!', 'success');
+    });
+
+    document.getElementById('edit-class-form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      updateClassroom(document.getElementById('ec-id').value, {
+        title: document.getElementById('ec-title').value,
+        subject: document.getElementById('ec-subject').value,
+        section: document.getElementById('ec-section').value,
+        description: document.getElementById('ec-desc').value,
+      });
+      document.getElementById('edit-class-modal').classList.add('hidden');
+      showToast('Class updated!', 'success');
+    });
+
+    document.getElementById('edit-assign-form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const rawDate = document.getElementById('ea-due').value;
+      const dueDate = rawDate ? new Date(rawDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '';
+      updateAssignment(document.getElementById('ea-id').value, {
+        title: document.getElementById('ea-title').value,
+        kind: document.getElementById('ea-kind').value,
+        dueDate,
+        maxPoints: Number(document.getElementById('ea-points').value),
+        description: document.getElementById('ea-desc').value,
+        attachmentUrl: document.getElementById('ea-attachment').value.trim(),
+      });
+      document.getElementById('edit-assign-modal').classList.add('hidden');
+      showToast('Assignment updated!', 'success');
+    });
+
+    // ── Assign Subjects drawer ───────────────────────────────────────────
+    let subjectsUserId = null;
+    let subjectsList = [];
+
+    const drawer = document.getElementById('assign-subjects-drawer');
+    const backdrop = document.getElementById('assign-subjects-backdrop');
+
+    function openSubjectsDrawer(userId) {
+      const state = getState();
+      const user = state.users.find(u => u.id === userId);
+      if (!user) return;
+      subjectsUserId = userId;
+      subjectsList = [...(user.assignedSubjects ?? [])];
+      document.getElementById('assign-subjects-teacher-name').textContent = user.name;
+      document.getElementById('new-subject-input').value = '';
+      renderAssignedChips();
+      renderSuggestionChips(state);
+      // Slide in
+      backdrop.classList.remove('hidden');
+      requestAnimationFrame(() => {
+        backdrop.style.opacity = '1';
+        drawer.style.transform = 'translateX(0)';
+      });
+    }
+
+    function closeSubjectsDrawer() {
+      backdrop.style.opacity = '0';
+      drawer.style.transform = 'translateX(100%)';
+      setTimeout(() => backdrop.classList.add('hidden'), 280);
+    }
+
+    function renderAssignedChips() {
+      const list = document.getElementById('assign-subjects-list');
+      if (!list) return;
+      if (subjectsList.length === 0) {
+        list.innerHTML = '<span class="text-xs text-[var(--app-text-muted)] italic">None assigned yet.</span>';
+        return;
+      }
+      list.innerHTML = subjectsList.map((s, i) => `
+        <span class="assigned-chip inline-flex items-center gap-1 rounded-full border border-blue-500/30 bg-blue-500/15 pl-3 pr-2 py-1 text-xs font-medium text-blue-300 cursor-default" data-index="${i}">
+          ${escHtml(s)}
+          <button class="remove-assigned-chip ml-0.5 rounded-full p-0.5 hover:bg-red-500/20 hover:text-red-400 transition" data-index="${i}" title="Remove">
+            <span class="material-symbols-outlined text-[12px] leading-none">close</span>
+          </button>
+        </span>
+      `).join('');
+      list.querySelectorAll('.remove-assigned-chip').forEach(btn => {
+        btn.addEventListener('click', () => {
+          subjectsList.splice(Number(btn.dataset.index), 1);
+          renderAssignedChips();
+          renderSuggestionChips(getState());
+        });
+      });
+    }
+
+    function renderSuggestionChips(state) {
+      const container = document.getElementById('subjects-suggestions');
+      if (!container) return;
+      const allSubjects = [...new Set(state.classes.map(c => c.subject).filter(Boolean))].sort();
+      if (allSubjects.length === 0) {
+        container.innerHTML = '<span class="text-xs text-[var(--app-text-muted)]">No classes found.</span>';
+        return;
+      }
+      container.innerHTML = allSubjects.map(s => {
+        const active = subjectsList.includes(s);
+        return `
+          <button class="suggestion-chip rounded-full border px-3 py-1 text-xs font-medium transition-all duration-150 ${
+            active
+              ? 'border-blue-500/40 bg-blue-500/20 text-blue-300'
+              : 'border-[var(--app-border-subtle)] bg-white/5 text-[var(--app-text-secondary)] hover:border-blue-500/30 hover:bg-blue-500/10 hover:text-blue-200'
+          }" data-subject="${escHtml(s)}">
+            ${active ? '<span class="material-symbols-outlined text-[11px] mr-0.5 align-middle">check</span>' : ''}${escHtml(s)}
+          </button>`;
+      }).join('');
+      container.querySelectorAll('.suggestion-chip').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const subject = btn.dataset.subject;
+          if (subjectsList.includes(subject)) {
+            subjectsList = subjectsList.filter(s => s !== subject);
+          } else {
+            subjectsList.push(subject);
+          }
+          renderAssignedChips();
+          renderSuggestionChips(getState());
+        });
+      });
+    }
+
+    document.getElementById('add-subject-btn').addEventListener('click', () => {
+      const input = document.getElementById('new-subject-input');
+      const val = input.value.trim();
+      if (val && !subjectsList.includes(val)) {
+        subjectsList.push(val);
+        renderAssignedChips();
+        renderSuggestionChips(getState());
+      }
+      input.value = '';
+      input.focus();
+    });
+
+    document.getElementById('new-subject-input').addEventListener('keydown', e => {
+      if (e.key === 'Enter') { e.preventDefault(); document.getElementById('add-subject-btn').click(); }
+    });
+
+    document.getElementById('save-subjects-btn').addEventListener('click', () => {
+      if (!subjectsUserId) return;
+      updateUserSubjects(subjectsUserId, subjectsList);
+      closeSubjectsDrawer();
+      showToast('Subjects updated!', 'success');
+    });
+
+    document.getElementById('assign-subjects-close').addEventListener('click', closeSubjectsDrawer);
+    backdrop.addEventListener('click', closeSubjectsDrawer);
+
+    } // end requireRole guard
+  </script>
+</body>
+</html>

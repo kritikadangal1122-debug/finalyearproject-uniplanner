@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Discussions — UniPlanner</title>
+  <link rel="stylesheet" href="css/theme.css" />
+  <script>window.tailwind={config:{theme:{extend:{colors:{primary:'var(--primary)',secondary:'var(--secondary)','text-primary':'var(--app-text-primary)','text-secondary':'var(--app-text-secondary)','text-muted':'var(--app-text-muted)','border-subtle':'var(--app-border-subtle)'}}}}}</script>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body>
+  <aside id="sidebar" class="sidebar closed"></aside>
+  <div id="sidebar-overlay" class="sidebar-overlay"></div>
+  <div class="main-content">
+    <header id="topbar" class="topbar"></header>
+    <main id="page-content" class="page-inner"></main>
+  </div>
+  <div id="toast-container" class="toast-container"></div>
+
+  <script type="module">
+    import { initLayout, escHtml, viewPill, showToast } from './js/app.js';
+    import { getState, getCurrentUser, getCurrentRole, createThread, sendMessage, subscribe } from './js/store.js';
+
+    let activeClassId = null;
+
+    initLayout();
+    renderPage();
+    subscribe(renderPage);
+
+    function renderPage() {
+      const state = getState();
+      const user = getCurrentUser();
+      const role = getCurrentRole();
+
+      const visibleClasses = role === 'student' && user
+        ? state.classes.filter(c => !c.archived && c.enrolledStudentIds.includes(user.id))
+        : state.classes.filter(c => !c.archived);
+
+      if (!activeClassId && visibleClasses.length > 0) {
+        activeClassId = visibleClasses[0].id;
+      }
+      if (activeClassId && !visibleClasses.find(c => c.id === activeClassId)) {
+        activeClassId = visibleClasses.length > 0 ? visibleClasses[0].id : null;
+      }
+
+      const discussions = activeClassId ? state.discussions.filter(d => d.classId === activeClassId) : [];
+      const messages = activeClassId ? state.messages.filter(m => m.classId === activeClassId) : [];
+
+      document.getElementById('page-content').innerHTML = `
+        <div class="mb-5 flex items-center justify-between">
+          <h1 class="text-2xl font-semibold text-text-primary">Discussions</h1>
+        </div>
+
+        <div class="grid gap-5 lg:grid-cols-[1fr_1.2fr]">
+          <!-- Left: class picker + discussions -->
+          <div class="space-y-4">
+            <!-- Class selector -->
+            <div class="metric-card">
+              <p class="text-xs uppercase tracking-widest text-text-muted mb-3">Select class</p>
+              <div class="space-y-1.5" id="class-list">
+                ${visibleClasses.length === 0
+                  ? `<p class="text-sm text-text-secondary text-center py-3">You haven't joined any classes yet.<br/><a href="classes.html" class="text-primary hover:underline">Browse classes</a></p>`
+                  : visibleClasses.map(c => `
+                  <button class="class-select-btn w-full flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition hover:bg-white/5 ${activeClassId === c.id ? 'bg-white/10 border border-blue-500/20' : 'border border-transparent'}"
+                    data-id="${c.id}">
+                    <div class="h-2.5 w-2.5 shrink-0 rounded-full" style="background:${c.color}"></div>
+                    <span class="font-medium text-text-primary truncate flex-1 text-left">${escHtml(c.title)}</span>
+                    ${c.unreadMessages > 0 ? `<span class="shrink-0 rounded-full bg-blue-500 px-1.5 text-[10px] font-semibold text-white">${c.unreadMessages}</span>` : ''}
+                  </button>
+                `).join('')}
+              </div>
+            </div>
+
+            <!-- Discussions list -->
+            <div class="metric-card">
+              <div class="mb-4 flex items-center justify-between">
+                <h2 class="text-base font-semibold text-text-primary">Threads</h2>
+                <span class="text-xs text-text-muted">${discussions.length} threads</span>
+              </div>
+
+              <!-- New thread form -->
+              <form id="new-thread-form" class="mb-4 flex gap-2">
+                <input id="thread-input" class="form-input flex-1 text-sm" placeholder="Start a discussion... (@mention supported)" />
+                <button type="submit" class="btn-primary px-3 shrink-0 text-sm">Post</button>
+              </form>
+
+              <div class="space-y-3" id="threads-list">
+                ${discussions.length === 0
+                  ? '<p class="text-sm text-text-secondary bg-black/10 rounded-xl p-4 text-center">No discussions yet. Be the first to post!</p>'
+                  : discussions.map(d => `
+                    <div class="rounded-xl border border-[var(--app-border-subtle)] ${d.pinned ? 'bg-amber-500/5 border-amber-500/20' : 'bg-white/5'} p-4">
+                      <div class="flex items-start justify-between gap-3">
+                        <div class="flex items-start gap-3">
+                          <div class="h-8 w-8 shrink-0 rounded-full flex items-center justify-center ${d.role === 'teacher' ? 'bg-emerald-500/20' : d.role === 'admin' ? 'bg-purple-500/20' : 'bg-blue-500/20'}">
+                            <span class="material-symbols-outlined text-[14px] ${d.role === 'teacher' ? 'text-emerald-400' : d.role === 'admin' ? 'text-purple-400' : 'text-blue-400'}">person</span>
+                          </div>
+                          <div class="min-w-0 flex-1">
+                            <div class="flex flex-wrap items-center gap-1.5">
+                              <p class="text-sm font-semibold text-text-primary">${escHtml(d.author)}</p>
+                              <span class="badge ${d.role === 'teacher' ? 'role-teacher' : d.role === 'admin' ? 'role-admin' : 'role-student'}">${d.role}</span>
+                              ${d.pinned ? '<span class="material-symbols-outlined text-[14px] text-amber-400">push_pin</span>' : ''}
+                            </div>
+                            <p class="mt-1 text-sm text-text-secondary">${escHtml(d.message)}</p>
+                            ${d.mentions.length > 0 ? `<p class="mt-1 text-xs text-blue-400">@${d.mentions.join(', @')}</p>` : ''}
+                          </div>
+                        </div>
+                        <div class="text-right shrink-0">
+                          <p class="text-xs text-text-muted">${escHtml(d.time)}</p>
+                          <p class="text-xs text-text-secondary mt-1">${d.replies} replies</p>
+                        </div>
+                      </div>
+                    </div>
+                  `).join('')
+                }
+              </div>
+            </div>
+          </div>
+
+          <!-- Right: Live chat -->
+          <div class="metric-card flex flex-col" style="height:560px">
+            <div class="mb-4 flex items-center justify-between border-b border-[var(--app-border-subtle)] pb-3">
+              <h2 class="text-base font-semibold text-text-primary">Live Chat</h2>
+              <span class="text-xs text-text-muted">${messages.length} messages</span>
+            </div>
+            <div id="messages-area" class="flex-1 overflow-y-auto space-y-3 mb-4">
+              ${messages.length === 0
+                ? '<p class="text-center text-sm text-text-secondary py-6">No messages yet. Say hello!</p>'
+                : messages.map(m => {
+                    const isMe = m.sender === user?.name;
+                    return `
+                      <div class="flex items-start gap-2 ${isMe ? 'flex-row-reverse' : ''}">
+                        <div class="h-7 w-7 shrink-0 rounded-full flex items-center justify-center ${m.role === 'teacher' ? 'bg-emerald-500/20' : 'bg-blue-500/20'}">
+                          <span class="material-symbols-outlined text-[12px] ${m.role === 'teacher' ? 'text-emerald-400' : 'text-blue-400'}">person</span>
+                        </div>
+                        <div class="max-w-[75%] ${isMe ? 'items-end' : 'items-start'} flex flex-col">
+                          <p class="text-[10px] text-text-muted mb-0.5 ${isMe ? 'text-right' : ''}">${escHtml(m.sender)} · ${escHtml(m.time)}</p>
+                          <div class="rounded-2xl px-3 py-2 text-sm ${isMe ? 'bg-primary text-white rounded-tr-sm' : 'bg-white/10 text-text-primary rounded-tl-sm'}">
+                            ${escHtml(m.message)}
+                          </div>
+                        </div>
+                      </div>
+                    `;
+                  }).join('')
+              }
+            </div>
+            <form id="chat-form" class="flex gap-2 border-t border-[var(--app-border-subtle)] pt-3">
+              <input id="chat-input" class="form-input flex-1 text-sm" placeholder="Send a message..." />
+              <button type="submit" class="btn-primary px-3 shrink-0">
+                <span class="material-symbols-outlined text-[16px]">send</span>
+              </button>
+            </form>
+          </div>
+        </div>
+      `;
+
+      // Scroll chat to bottom
+      const msgArea = document.getElementById('messages-area');
+      if (msgArea) msgArea.scrollTop = msgArea.scrollHeight;
+
+      // Class selection
+      document.querySelectorAll('.class-select-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          activeClassId = btn.dataset.id;
+          renderPage();
+        });
+      });
+
+      // New thread
+      document.getElementById('new-thread-form')?.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const msg = document.getElementById('thread-input').value.trim();
+        if (!msg || !activeClassId) return;
+        createThread({ classId: activeClassId, author: user.name, message: msg, role });
+        document.getElementById('thread-input').value = '';
+        showToast('Thread posted!', 'success');
+      });
+
+      // Chat
+      document.getElementById('chat-form')?.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const msg = document.getElementById('chat-input').value.trim();
+        if (!msg || !activeClassId) return;
+        sendMessage({ classId: activeClassId, sender: user.name, role, message: msg });
+        document.getElementById('chat-input').value = '';
+      });
+    }
+  </script>
+</body>
+</html>

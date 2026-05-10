@@ -1,13 +1,11 @@
-import type express from 'express';
 import { randomUUID } from 'crypto';
-import { store } from '../store';
-import { API_PREFIX, createJsonRoute, requireAuth } from '../http';
+import { store } from '../store.js';
+import { API_PREFIX, createJsonRoute, requireAuth } from '../http.js';
 
-export const registerMessagesModule = (app: express.Express) => {
+export const registerMessagesModule = (app) => {
   app.get(`${API_PREFIX}/messages/:classId`, createJsonRoute((req, res) => {
     const auth = requireAuth(req, res);
     if (!auth) return;
-
     res.json({ messages: store.getSnapshot().app.messages.filter((item) => item.classId === req.params.classId) });
   }));
 
@@ -15,7 +13,7 @@ export const registerMessagesModule = (app: express.Express) => {
     const auth = requireAuth(req, res);
     if (!auth) return;
 
-    const { classId, sender, role, message } = req.body as { classId?: string; sender?: string; role?: any; message?: string };
+    const { classId, sender, role, message } = req.body;
     if (!classId || !sender || !role || !message) {
       res.status(400).json({ error: 'Missing message fields.' });
       return;
@@ -28,7 +26,7 @@ export const registerMessagesModule = (app: express.Express) => {
       role,
       message,
       time: 'Now',
-    } as any;
+    };
 
     store.update((draft) => {
       draft.app.messages = [...draft.app.messages, chatMessage];

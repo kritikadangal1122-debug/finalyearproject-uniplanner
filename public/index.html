@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>UniPlanner</title>
+  <link rel="stylesheet" href="css/theme.css" />
+</head>
+<body>
+  <script type="module">
+    import { initStore, getCurrentUser } from './js/store.js';
+    initStore();
+    window.location.replace(getCurrentUser() ? 'dashboard.html' : 'login.html');
+  </script>
+</body>
+</html>

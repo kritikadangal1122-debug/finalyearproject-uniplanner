@@ -1,13 +1,10 @@
-import type express from 'express';
-import { randomUUID } from 'crypto';
-import { store } from '../store';
-import { API_PREFIX, createJsonRoute, requireAuth, getCurrentSnapshot } from '../http';
+import { store } from '../store.js';
+import { API_PREFIX, createJsonRoute, requireAuth, getCurrentSnapshot } from '../http.js';
 
-export const registerNotificationsModule = (app: express.Express) => {
+export const registerNotificationsModule = (app) => {
   app.get(`${API_PREFIX}/notifications`, createJsonRoute((req, res) => {
     const auth = requireAuth(req, res);
     if (!auth) return;
-
     res.json({ notifications: getCurrentSnapshot().app.notifications });
   }));
 
@@ -17,7 +14,9 @@ export const registerNotificationsModule = (app: express.Express) => {
 
     const { notificationId } = req.params;
     store.update((draft) => {
-      draft.app.notifications = draft.app.notifications.map((item) => item.id === notificationId ? { ...item, unread: false } : item);
+      draft.app.notifications = draft.app.notifications.map((item) =>
+        item.id === notificationId ? { ...item, unread: false } : item
+      );
     });
 
     res.json({ ok: true });

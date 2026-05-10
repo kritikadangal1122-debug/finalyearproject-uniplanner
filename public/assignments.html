@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Assignments — UniPlanner</title>
+  <link rel="stylesheet" href="css/theme.css" />
+  <script>window.tailwind={config:{theme:{extend:{colors:{primary:'var(--primary)',secondary:'var(--secondary)','text-primary':'var(--app-text-primary)','text-secondary':'var(--app-text-secondary)','text-muted':'var(--app-text-muted)','border-subtle':'var(--app-border-subtle)'}}}}}</script>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body>
+  <aside id="sidebar" class="sidebar closed"></aside>
+  <div id="sidebar-overlay" class="sidebar-overlay"></div>
+  <div class="main-content">
+    <header id="topbar" class="topbar"></header>
+    <main id="page-content" class="page-inner"></main>
+  </div>
+  <div id="toast-container" class="toast-container"></div>
+
+  <!-- Create assignment modal -->
+  <div id="create-modal" class="modal-overlay hidden">
+    <div class="modal-box">
+      <div class="mb-5 flex items-center justify-between">
+        <h3 class="text-lg font-semibold text-text-primary">Create Assignment</h3>
+        <button id="modal-close" class="btn-ghost p-1"><span class="material-symbols-outlined">close</span></button>
+      </div>
+      <form id="create-form" class="space-y-3">
+        <input id="ca-title" class="form-input" placeholder="Title" required />
+        <select id="ca-class" class="form-input"></select>
+        <select id="ca-kind" class="form-input">
+          <option value="assignment">Assignment</option>
+          <option value="quiz">Quiz</option>
+          <option value="project">Project</option>
+        </select>
+        <div>
+          <label class="text-xs text-text-muted mb-1 block">Due date</label>
+          <input id="ca-due" class="form-input" type="date" />
+        </div>
+        <input id="ca-points" class="form-input" type="number" placeholder="Max points" value="100" min="1" />
+        <textarea id="ca-desc" class="form-input" rows="2" placeholder="Description"></textarea>
+        <div>
+          <label class="text-xs text-text-muted mb-1 block">Attachment (optional)</label>
+          <div class="file-drop" id="ca-attach-drop">
+            <input id="ca-attach-file" type="file"
+              accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.jpg,.jpeg,.png,.gif,.mp4,.mov,.avi,.webm,.zip" />
+            <span class="material-symbols-outlined text-2xl text-text-muted block mb-1">attach_file</span>
+            <p class="text-sm file-drop-name" id="ca-attach-name" style="color:var(--app-text-secondary)">Click or drag to attach a file</p>
+            <p class="text-xs mt-0.5" style="color:var(--app-text-muted)">PDF, Word, images, video — or paste URL below</p>
+          </div>
+          <input id="ca-attachment" class="form-input mt-2" placeholder="Paste a URL instead (optional)" />
+        </div>
+        <button type="submit" class="btn-primary w-full py-2.5">
+          <span class="material-symbols-outlined text-[16px]">add</span> Create
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Edit assignment modal -->
+  <div id="edit-modal" class="modal-overlay hidden">
+    <div class="modal-box">
+      <div class="mb-5 flex items-center justify-between">
+        <h3 class="text-lg font-semibold text-text-primary">Edit Assignment</h3>
+        <button id="edit-modal-close" class="btn-ghost p-1"><span class="material-symbols-outlined">close</span></button>
+      </div>
+      <form id="edit-form" class="space-y-3">
+        <input id="ea-title" class="form-input" placeholder="Title" required />
+        <select id="ea-kind" class="form-input">
+          <option value="assignment">Assignment</option>
+          <option value="quiz">Quiz</option>
+          <option value="project">Project</option>
+        </select>
+        <div>
+          <label class="text-xs text-text-muted mb-1 block">Due date</label>
+          <input id="ea-due" class="form-input" type="date" />
+        </div>
+        <input id="ea-points" class="form-input" type="number" placeholder="Max points" min="1" />
+        <textarea id="ea-desc" class="form-input" rows="2" placeholder="Description"></textarea>
+        <div>
+          <label class="text-xs text-text-muted mb-1 block">Attachment (optional)</label>
+          <div class="file-drop" id="ea-attach-drop">
+            <input id="ea-attach-file" type="file"
+              accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.jpg,.jpeg,.png,.gif,.mp4,.mov,.avi,.webm,.zip" />
+            <span class="material-symbols-outlined text-2xl text-text-muted block mb-1">attach_file</span>
+            <p class="text-sm file-drop-name" id="ea-attach-name" style="color:var(--app-text-secondary)">Click or drag to replace attachment</p>
+            <p class="text-xs mt-0.5" style="color:var(--app-text-muted)">Leave blank to keep existing — or paste URL below</p>
+          </div>
+          <input id="ea-attachment" class="form-input mt-2" placeholder="Paste a URL instead (optional)" />
+        </div>
+        <button type="submit" class="btn-primary w-full py-2.5">Save Changes</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Submit assignment modal -->
+  <div id="submit-modal" class="modal-overlay hidden">
+    <div class="modal-box max-w-lg">
+      <div class="mb-5 flex items-center justify-between">
+        <h3 class="text-lg font-semibold text-text-primary">Submit Work</h3>
+        <button id="submit-modal-close" class="btn-ghost p-1"><span class="material-symbols-outlined">close</span></button>
+      </div>
+      <div id="submit-assignment-info" class="mb-4 rounded-xl border border-[var(--app-border-subtle)] bg-white/5 p-3 text-sm text-text-secondary"></div>
+      <form id="submit-form" class="space-y-3">
+        <div class="file-drop" id="sub-drop-zone">
+          <input id="sub-file" type="file"
+            accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.jpg,.jpeg,.png,.gif,.mp4,.mov,.avi,.webm,.zip,.rar" />
+          <span class="material-symbols-outlined text-3xl text-text-muted block mb-1">upload_file</span>
+          <p class="text-sm file-drop-name" id="sub-file-name" style="color:var(--app-text-secondary)">Click or drag a file here</p>
+          <p class="text-xs mt-0.5" style="color:var(--app-text-muted)">PDF, Word, images, video, ZIP</p>
+        </div>
+        <input id="sub-filename" class="form-input" placeholder="Or type a file name manually" />
+        <textarea id="sub-notes" class="form-input" rows="3" placeholder="Notes for your teacher (optional)"></textarea>
+        <button type="submit" class="btn-primary w-full py-2.5">
+          <span class="material-symbols-outlined text-[16px]">upload</span> Submit Assignment
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initLayout, escHtml, viewPill, showToast } from './js/app.js';
+    import { getState, getCurrentUser, getCurrentRole, createAssignment, updateAssignment, addSubmission, subscribe } from './js/store.js';
+    import { uploadFile } from './js/cloudinary.js';
+
+    let selectedAssignmentId = null;
+    let editingAssignmentId = null;
+    let currentFilter = 'all';
+
+    initLayout();
+    renderPage();
+    subscribe(renderPage);
+
+    function renderPage() {
+      const state = getState();
+      const user = getCurrentUser();
+      const role = getCurrentRole();
+      const canCreate = role === 'teacher' || role === 'admin';
+      const pageTitle = role === 'teacher' ? 'Grade Center' : role === 'admin' ? 'Assignment Overview' : 'Assignments';
+
+      // Students only see assignments for their enrolled classes
+      // Teachers only see assignments for their assigned subjects
+      const enrolledClassIds = role === 'student'
+        ? new Set(state.classes.filter(c => !c.archived && c.enrolledStudentIds.includes(user?.id)).map(c => c.id))
+        : null;
+      const teacherSubjectClassIds = role === 'teacher' && (user?.assignedSubjects?.length ?? 0) > 0
+        ? new Set(state.classes.filter(c => user.assignedSubjects.includes(c.subject)).map(c => c.id))
+        : null;
+      const allAssignments = role === 'student'
+        ? state.assignments.filter(a => enrolledClassIds.has(a.classId))
+        : teacherSubjectClassIds
+          ? state.assignments.filter(a => teacherSubjectClassIds.has(a.classId))
+          : state.assignments;
+
+      let filtered = allAssignments;
+      if (currentFilter !== 'all') filtered = filtered.filter(a => a.kind === currentFilter || a.status === currentFilter);
+
+      document.getElementById('page-content').innerHTML = `
+        <div class="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h1 class="text-2xl font-semibold text-text-primary">${pageTitle}</h1>
+            <p class="text-sm text-text-secondary mt-1">${allAssignments.length} total assignment${allAssignments.length !== 1 ? 's' : ''}</p>
+          </div>
+          ${canCreate ? `<button id="create-btn" class="btn-primary text-sm px-4 py-2 self-start"><span class="material-symbols-outlined text-[16px]">add</span> New Assignment</button>` : ''}
+        </div>
+
+        <!-- Filter bar -->
+        <div class="mb-5 flex flex-wrap gap-2">
+          ${['all','assignment','quiz','project','assigned','submitted','graded'].map(f => `
+            <button class="filter-btn rounded-full border border-[var(--app-border-subtle)] bg-white/5 px-3 py-1 text-xs font-medium transition hover:border-blue-500/40 ${currentFilter === f ? 'bg-primary text-white border-transparent' : 'text-text-secondary'}"
+              data-filter="${f}">${f.charAt(0).toUpperCase() + f.slice(1)}</button>
+          `).join('')}
+        </div>
+
+        <!-- Assignments list -->
+        <div class="space-y-3" id="assignments-list">
+          ${filtered.length === 0
+            ? '<p class="text-sm text-text-secondary bg-black/10 rounded-xl p-6 text-center">No assignments match the filter.</p>'
+            : filtered.map(a => renderAssignmentCard(a, state, role, user)).join('')
+          }
+        </div>
+      `;
+
+      // Populate class select in create modal (teachers only see their assigned subjects)
+      const caClass = document.getElementById('ca-class');
+      if (caClass) {
+        const teacherSubjects = role === 'teacher' ? (user?.assignedSubjects ?? []) : null;
+        const availableClasses = teacherSubjects
+          ? state.classes.filter(c => !c.archived && (teacherSubjects.length === 0 || teacherSubjects.includes(c.subject)))
+          : state.classes.filter(c => !c.archived);
+        caClass.innerHTML = availableClasses.length
+          ? availableClasses.map(c => `<option value="${c.id}">${escHtml(c.title)} (${escHtml(c.subject)})</option>`).join('')
+          : '<option value="">No classes available for your subjects</option>';
+      }
+
+      document.getElementById('create-btn')?.addEventListener('click', () => {
+        document.getElementById('create-modal').classList.remove('hidden');
+      });
+
+      document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          currentFilter = btn.dataset.filter;
+          document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('bg-primary','text-white','border-transparent'));
+          btn.classList.add('bg-primary','text-white','border-transparent');
+          const refiltered = currentFilter === 'all' ? allAssignments : allAssignments.filter(a => a.kind === currentFilter || a.status === currentFilter);
+          const list = document.getElementById('assignments-list');
+          if (list) list.innerHTML = refiltered.length === 0
+            ? '<p class="text-sm text-text-secondary bg-black/10 rounded-xl p-6 text-center">No assignments match the filter.</p>'
+            : refiltered.map(a => renderAssignmentCard(a, state, role, user)).join('');
+          attachCardEvents(state, user);
+        });
+      });
+
+      attachCardEvents(state, user);
+    }
+
+    function attachCardEvents(state, user) {
+      document.querySelectorAll('.submit-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          selectedAssignmentId = btn.dataset.id;
+          const a = state.assignments.find(x => x.id === selectedAssignmentId);
+          document.getElementById('submit-assignment-info').textContent = `${a?.title} · Due: ${a?.dueDate} · ${a?.maxPoints} pts`;
+          document.getElementById('submit-modal').classList.remove('hidden');
+        });
+      });
+
+      document.querySelectorAll('.edit-assignment-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          editingAssignmentId = btn.dataset.id;
+          const a = state.assignments.find(x => x.id === editingAssignmentId);
+          if (!a) return;
+          document.getElementById('ea-title').value = a.title;
+          document.getElementById('ea-kind').value = a.kind;
+          document.getElementById('ea-due').value = a.dueDate || '';
+          document.getElementById('ea-points').value = a.maxPoints;
+          document.getElementById('ea-desc').value = a.description || '';
+          document.getElementById('ea-attachment').value = a.attachmentUrl || '';
+          // Reset file input and show existing attachment state
+          const eaFile = document.getElementById('ea-attach-file');
+          if (eaFile) eaFile.value = '';
+          showExistingAttach('ea-attach-drop', 'ea-attach-name', a.attachmentUrl, a.attachmentName);
+          document.getElementById('edit-modal').classList.remove('hidden');
+        });
+      });
+    }
+
+    function renderAssignmentCard(a, state, role, user) {
+      const cls = state.classes.find(c => c.id === a.classId);
+      const realSubs = state.submissions.filter(s => s.assignmentId === a.id);
+      const userSub = user ? realSubs.find(s => s.studentId === user.id) : null;
+      const gradedSubs = realSubs.filter(s => s.score != null);
+      const avgScore = gradedSubs.length > 0
+        ? Math.round(gradedSubs.reduce((sum, s) => sum + s.score, 0) / gradedSubs.length)
+        : null;
+
+      const statusColors = {
+        assigned: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
+        submitted: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
+        graded: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
+        draft: 'bg-white/5 text-text-muted border-[var(--app-border-subtle)]',
+      };
+
+      const canManage = role === 'teacher' || role === 'admin';
+
+      return `
+        <div class="metric-card">
+          <div class="flex items-start justify-between gap-3">
+            <div class="flex items-start gap-3 min-w-0 flex-1">
+              <div class="h-10 w-10 shrink-0 rounded-xl flex items-center justify-center" style="${cls ? `background:${cls.color}22` : 'background:rgba(255,255,255,0.05)'}">
+                <span class="material-symbols-outlined ${a.kind === 'quiz' ? 'text-blue-400' : a.kind === 'project' ? 'text-violet-400' : 'text-emerald-400'}">
+                  ${a.kind === 'quiz' ? 'quiz' : a.kind === 'project' ? 'work' : 'assignment'}
+                </span>
+              </div>
+              <div class="min-w-0 flex-1">
+                <h3 class="font-semibold text-text-primary">${escHtml(a.title)}</h3>
+                <p class="text-xs text-text-secondary mt-0.5">${escHtml(cls?.title ?? 'Unknown class')} · ${a.kind}</p>
+                ${a.description ? `<p class="text-sm text-text-secondary mt-1 line-clamp-2">${escHtml(a.description)}</p>` : ''}
+                ${a.attachmentUrl ? `
+                  <a href="${escHtml(a.attachmentUrl)}" target="_blank" rel="noopener"
+                    class="inline-flex items-center gap-1.5 mt-2 rounded-lg border border-[var(--app-border-subtle)] bg-white/5 px-2.5 py-1 text-xs font-medium text-primary hover:bg-primary/10 transition">
+                    <span class="material-symbols-outlined text-[14px]">attach_file</span>
+                    ${escHtml(a.attachmentName || a.attachmentUrl.split('/').pop().split('?')[0] || 'Attachment')}
+                  </a>` : ''}
+              </div>
+            </div>
+            <div class="text-right shrink-0 space-y-1.5 flex flex-col items-end gap-1">
+              <span class="inline-block rounded-full border px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${statusColors[a.status] ?? statusColors.draft}">${a.status}</span>
+              ${viewPill(a.kind)}
+              ${canManage ? `<button class="edit-assignment-btn btn-ghost p-1" data-id="${a.id}" title="Edit"><span class="material-symbols-outlined text-[16px]">edit</span></button>` : ''}
+            </div>
+          </div>
+
+          <div class="mt-3 flex flex-wrap items-center justify-between gap-3">
+            <div class="flex flex-wrap gap-3 text-xs text-text-muted">
+              ${a.dueDate ? `<span><span class="material-symbols-outlined text-[12px] text-amber-400">schedule</span> ${escHtml(a.dueDate)}</span>` : ''}
+              <span><span class="material-symbols-outlined text-[12px]">star</span> ${a.maxPoints} pts</span>
+              <span><span class="material-symbols-outlined text-[12px]">upload_file</span> ${realSubs.length} submission${realSubs.length !== 1 ? 's' : ''}</span>
+              ${canManage && avgScore != null ? `<span>Avg: ${avgScore}/${a.maxPoints}</span>` : ''}
+            </div>
+            <div class="flex gap-2 flex-wrap">
+              ${role === 'student' && a.status !== 'graded' && !userSub
+                ? `<button class="submit-btn btn-primary text-xs px-3 py-1.5" data-id="${a.id}">
+                    <span class="material-symbols-outlined text-[14px]">upload</span> Submit
+                  </button>`
+                : ''}
+              ${userSub ? `<span class="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-3 py-1 text-xs text-emerald-400 border border-emerald-500/20">
+                  <span class="material-symbols-outlined text-[12px]">check_circle</span> Submitted
+                </span>` : ''}
+              ${canManage ? `<a href="grading.html" class="btn-ghost text-xs px-3 py-1.5">Grade</a>` : ''}
+            </div>
+          </div>
+
+          ${userSub?.score != null
+            ? `<div class="mt-3 rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-3">
+                <div class="flex items-center justify-between">
+                  <p class="text-sm font-semibold text-text-primary">Grade: ${userSub.score}/${a.maxPoints}</p>
+                  <span class="text-sm font-bold text-emerald-400">${Math.round(userSub.score/a.maxPoints*100)}%</span>
+                </div>
+                ${userSub.teacherFeedback ? `<p class="mt-1 text-xs italic text-text-secondary">"${escHtml(userSub.teacherFeedback)}"</p>` : ''}
+              </div>`
+            : ''
+          }
+        </div>
+      `;
+    }
+
+    // ── Drop zone helpers ──
+    function setupAttachDrop(dropId, inputId, nameId) {
+      const drop = document.getElementById(dropId);
+      const input = document.getElementById(inputId);
+      if (!drop || !input) return;
+      drop.addEventListener('dragover', (e) => { e.preventDefault(); drop.classList.add('drag-over'); });
+      drop.addEventListener('dragleave', () => drop.classList.remove('drag-over'));
+      drop.addEventListener('drop', () => drop.classList.remove('drag-over'));
+      input.addEventListener('change', () => {
+        const file = input.files?.[0];
+        const label = document.getElementById(nameId);
+        if (file) {
+          if (label) label.textContent = file.name;
+          drop.classList.add('has-file');
+        }
+      });
+    }
+    function resetAttachDrop(dropId, nameId, placeholder) {
+      const drop = document.getElementById(dropId);
+      const label = document.getElementById(nameId);
+      if (drop) drop.classList.remove('has-file', 'drag-over');
+      if (label) label.textContent = placeholder;
+    }
+    function showExistingAttach(dropId, nameId, attachmentUrl, attachmentName) {
+      const drop = document.getElementById(dropId);
+      const label = document.getElementById(nameId);
+      if (attachmentUrl) {
+        const displayName = attachmentName || attachmentUrl.split('/').pop().split('?')[0] || 'Current attachment';
+        if (label) label.textContent = displayName;
+        if (drop) drop.classList.add('has-file');
+      } else {
+        if (label) label.textContent = 'Click or drag to replace attachment';
+        if (drop) drop.classList.remove('has-file');
+      }
+    }
+    setupAttachDrop('ca-attach-drop', 'ca-attach-file', 'ca-attach-name');
+    setupAttachDrop('ea-attach-drop', 'ea-attach-file', 'ea-attach-name');
+
+    async function doUploadAttach(fileInputId, urlInputId) {
+      const file = document.getElementById(fileInputId).files?.[0];
+      if (file) {
+        const result = await uploadFile(file, { onProgress: () => {} });
+        return { url: result.url, name: result.name };
+      }
+      const url = document.getElementById(urlInputId).value.trim();
+      return { url, name: '' };
+    }
+
+    // Modal: create assignment
+    document.getElementById('modal-close').addEventListener('click', () => {
+      document.getElementById('create-modal').classList.add('hidden');
+      resetAttachDrop('ca-attach-drop', 'ca-attach-name', 'Click or drag to attach a file');
+    });
+    document.getElementById('create-modal').addEventListener('click', e => {
+      if (e.target === e.currentTarget) {
+        e.currentTarget.classList.add('hidden');
+        resetAttachDrop('ca-attach-drop', 'ca-attach-name', 'Click or drag to attach a file');
+      }
+    });
+    document.getElementById('create-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = e.target.querySelector('[type="submit"]');
+      const origHTML = btn.innerHTML;
+      const rawDate = document.getElementById('ca-due').value;
+      const dueDate = rawDate ? new Date(rawDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '';
+      let attachmentUrl = '', attachmentName = '';
+      const file = document.getElementById('ca-attach-file').files?.[0];
+      if (file) {
+        btn.disabled = true;
+        btn.innerHTML = '<span class="material-symbols-outlined text-[16px]">hourglass_empty</span> Uploading…';
+        try {
+          const result = await uploadFile(file, { onProgress: (p) => { btn.innerHTML = `<span class="material-symbols-outlined text-[16px]">hourglass_empty</span> Uploading… ${p}%`; } });
+          attachmentUrl = result.url;
+          attachmentName = result.name;
+        } catch (err) {
+          showToast('Upload failed: ' + err.message, 'error');
+          btn.disabled = false; btn.innerHTML = origHTML; return;
+        }
+      } else {
+        attachmentUrl = document.getElementById('ca-attachment').value.trim();
+      }
+      createAssignment({
+        title: document.getElementById('ca-title').value,
+        classId: document.getElementById('ca-class').value,
+        kind: document.getElementById('ca-kind').value,
+        dueDate,
+        maxPoints: document.getElementById('ca-points').value,
+        description: document.getElementById('ca-desc').value,
+        attachmentUrl,
+        attachmentName,
+      });
+      document.getElementById('create-modal').classList.add('hidden');
+      document.getElementById('create-form').reset();
+      resetAttachDrop('ca-attach-drop', 'ca-attach-name', 'Click or drag to attach a file');
+      btn.disabled = false; btn.innerHTML = origHTML;
+      showToast('Assignment created!', 'success');
+    });
+
+    // Modal: edit assignment
+    document.getElementById('edit-modal-close').addEventListener('click', () => {
+      document.getElementById('edit-modal').classList.add('hidden');
+      resetAttachDrop('ea-attach-drop', 'ea-attach-name', 'Click or drag to replace attachment');
+    });
+    document.getElementById('edit-modal').addEventListener('click', e => {
+      if (e.target === e.currentTarget) {
+        e.currentTarget.classList.add('hidden');
+        resetAttachDrop('ea-attach-drop', 'ea-attach-name', 'Click or drag to replace attachment');
+      }
+    });
+    document.getElementById('edit-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = e.target.querySelector('[type="submit"]');
+      const origHTML = btn.innerHTML;
+      const rawDate = document.getElementById('ea-due').value;
+      const dueDate = rawDate ? new Date(rawDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '';
+      let attachmentUrl = document.getElementById('ea-attachment').value.trim();
+      let attachmentName = '';
+      const file = document.getElementById('ea-attach-file').files?.[0];
+      if (file) {
+        btn.disabled = true;
+        btn.innerHTML = '<span class="material-symbols-outlined text-[16px]">hourglass_empty</span> Uploading…';
+        try {
+          const result = await uploadFile(file, { onProgress: (p) => { btn.innerHTML = `<span class="material-symbols-outlined text-[16px]">hourglass_empty</span> Uploading… ${p}%`; } });
+          attachmentUrl = result.url;
+          attachmentName = result.name;
+        } catch (err) {
+          showToast('Upload failed: ' + err.message, 'error');
+          btn.disabled = false; btn.innerHTML = origHTML; return;
+        }
+      }
+      updateAssignment(editingAssignmentId, {
+        title: document.getElementById('ea-title').value,
+        kind: document.getElementById('ea-kind').value,
+        dueDate,
+        maxPoints: Number(document.getElementById('ea-points').value),
+        description: document.getElementById('ea-desc').value,
+        attachmentUrl,
+        ...(attachmentName && { attachmentName }),
+      });
+      document.getElementById('edit-modal').classList.add('hidden');
+      btn.disabled = false; btn.innerHTML = origHTML;
+      showToast('Assignment updated!', 'success');
+    });
+
+    // Modal: submit assignment
+    function resetSubmitDropZone() {
+      document.getElementById('submit-form').reset();
+      const z = document.getElementById('sub-drop-zone');
+      const l = document.getElementById('sub-file-name');
+      if (z) z.classList.remove('has-file', 'drag-over');
+      if (l) l.textContent = 'Click or drag a file here';
+    }
+    document.getElementById('submit-modal-close').addEventListener('click', () => { document.getElementById('submit-modal').classList.add('hidden'); resetSubmitDropZone(); });
+    document.getElementById('submit-modal').addEventListener('click', e => { if (e.target === e.currentTarget) { e.currentTarget.classList.add('hidden'); resetSubmitDropZone(); } });
+    document.getElementById('sub-file').addEventListener('change', (e) => {
+      const file = e.target.files?.[0];
+      const zone = document.getElementById('sub-drop-zone');
+      const label = document.getElementById('sub-file-name');
+      if (file) {
+        if (label) label.textContent = file.name;
+        if (zone) zone.classList.add('has-file');
+        document.getElementById('sub-filename').value = file.name;
+      } else {
+        if (label) label.textContent = 'Click or drag a file here';
+        if (zone) zone.classList.remove('has-file');
+      }
+    });
+
+    const subDropZone = document.getElementById('sub-drop-zone');
+    if (subDropZone) {
+      subDropZone.addEventListener('dragover', (e) => { e.preventDefault(); subDropZone.classList.add('drag-over'); });
+      subDropZone.addEventListener('dragleave', () => subDropZone.classList.remove('drag-over'));
+      subDropZone.addEventListener('drop', () => subDropZone.classList.remove('drag-over'));
+    }
+
+    document.getElementById('submit-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const user = getCurrentUser();
+      const file = document.getElementById('sub-file').files?.[0];
+      const manualName = document.getElementById('sub-filename').value.trim();
+      const notes = document.getElementById('sub-notes').value;
+      if (!file && !manualName) {
+        showToast('Please select a file or enter a file name.', 'error');
+        return;
+      }
+      const btn = e.target.querySelector('[type="submit"]');
+      const origHTML = btn.innerHTML;
+      let fileName = manualName;
+      let fileUrl = '';
+      if (file) {
+        btn.disabled = true;
+        btn.innerHTML = '<span class="material-symbols-outlined text-[16px]">hourglass_empty</span> Uploading…';
+        try {
+          const result = await uploadFile(file, {
+            onProgress: (pct) => { btn.innerHTML = `<span class="material-symbols-outlined text-[16px]">hourglass_empty</span> Uploading… ${pct}%`; },
+          });
+          fileUrl = result.url;
+          fileName = file.name;
+        } catch (err) {
+          showToast('Upload failed: ' + err.message, 'error');
+          btn.disabled = false;
+          btn.innerHTML = origHTML;
+          return;
+        }
+      }
+      addSubmission({
+        id: `sub-${crypto.randomUUID()}`,
+        assignmentId: selectedAssignmentId,
+        studentId: user.id,
+        fileName,
+        fileUrl,
+        notes,
+        submittedAt: new Date().toISOString(),
+      });
+      document.getElementById('submit-modal').classList.add('hidden');
+      btn.disabled = false;
+      btn.innerHTML = origHTML;
+      resetSubmitDropZone();
+      showToast('Assignment submitted!', 'success');
+    });
+  </script>
+</body>
+</html>

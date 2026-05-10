@@ -1,6 +1,4 @@
-import type { BackendSnapshot, NextBestAction, SubmissionRecord } from './types.ts';
-
-const dueSoonRank = (value: string) => {
+const dueSoonRank = (value) => {
   const lower = value.toLowerCase();
   if (lower.includes('today')) return 0;
   if (lower.includes('tomorrow')) return 1;
@@ -8,7 +6,7 @@ const dueSoonRank = (value: string) => {
   return 3;
 };
 
-export const collectPlatformSignals = (snapshot: BackendSnapshot) => {
+export const collectPlatformSignals = (snapshot) => {
   const activeClasses = snapshot.app.classes.filter((item) => !item.archived);
   const unreadNotifications = snapshot.app.notifications.filter((item) => item.unread).length;
   const draftOrActiveAssignments = snapshot.app.assignments.filter((item) => item.status !== 'graded');
@@ -25,7 +23,7 @@ export const collectPlatformSignals = (snapshot: BackendSnapshot) => {
   };
 };
 
-export const deriveNextBestAction = (snapshot: BackendSnapshot, userId: string): NextBestAction => {
+export const deriveNextBestAction = (snapshot, userId) => {
   const user = snapshot.app.users.find((item) => item.id === userId);
   if (!user) {
     return {
@@ -86,7 +84,7 @@ export const deriveNextBestAction = (snapshot: BackendSnapshot, userId: string):
     reason: unread > 0
       ? `${unread} notifications are unread across the workspace.`
       : riskGoal
-        ? `One or more learning goals are below the intervention threshold.`
+        ? 'One or more learning goals are below the intervention threshold.'
         : 'The platform is stable and up to date.',
     action: unread > 0
       ? 'Review priority alerts, acknowledgements, and unresolved issues.'
@@ -97,14 +95,14 @@ export const deriveNextBestAction = (snapshot: BackendSnapshot, userId: string):
   };
 };
 
-export const scoreSubmissionQuality = (submission: SubmissionRecord) => {
+export const scoreSubmissionQuality = (submission) => {
   const lengthScore = Math.min(100, Math.max(35, Math.round(submission.contentText.length / 6)));
   const plagiarismPenalty = Math.min(35, submission.plagiarismScore);
   const latePenalty = submission.lateFlag ? 10 : 0;
   return Math.max(0, Math.min(100, lengthScore - plagiarismPenalty - latePenalty));
 };
 
-export const buildPlatformHealth = (snapshot: BackendSnapshot) => {
+export const buildPlatformHealth = (snapshot) => {
   const signals = collectPlatformSignals(snapshot);
   const submissions = snapshot.submissions.length || 1;
   const scoreTotal = snapshot.submissions.reduce((total, submission) => total + (submission.score ?? scoreSubmissionQuality(submission)), 0);

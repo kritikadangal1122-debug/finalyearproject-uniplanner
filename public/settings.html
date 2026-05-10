@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Settings — UniPlanner</title>
+  <link rel="stylesheet" href="css/theme.css" />
+  <script>window.tailwind={config:{theme:{extend:{colors:{primary:'var(--primary)',secondary:'var(--secondary)','text-primary':'var(--app-text-primary)','text-secondary':'var(--app-text-secondary)','text-muted':'var(--app-text-muted)','border-subtle':'var(--app-border-subtle)'}}}}}</script>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body>
+  <aside id="sidebar" class="sidebar closed"></aside>
+  <div id="sidebar-overlay" class="sidebar-overlay"></div>
+  <div class="main-content">
+    <header id="topbar" class="topbar"></header>
+    <main id="page-content" class="page-inner"></main>
+  </div>
+  <div id="toast-container" class="toast-container"></div>
+
+  <script type="module">
+    import { initLayout, escHtml, showToast } from './js/app.js';
+    import { getState, getCurrentUser, getCurrentRole, setTheme, setLanguage, setNotificationPref, signOut, resetDemoData, subscribe } from './js/store.js';
+
+    initLayout();
+    renderPage();
+    subscribe(renderPage);
+
+    function renderPage() {
+      const state = getState();
+      const user = getCurrentUser();
+      const role = getCurrentRole();
+
+      document.getElementById('page-content').innerHTML = `
+        <div class="mb-6">
+          <h1 class="text-2xl font-semibold text-text-primary">Settings</h1>
+          <p class="text-sm text-text-secondary mt-1">Manage your account and preferences</p>
+        </div>
+
+        <div class="max-w-2xl space-y-5">
+          <!-- Profile -->
+          <div class="metric-card">
+            <h2 class="text-base font-semibold text-text-primary mb-4">Profile</h2>
+            <div class="flex items-center gap-4 mb-5">
+              <img src="${user?.avatar ?? ''}" alt="${escHtml(user?.name ?? '')}"
+                class="h-16 w-16 rounded-2xl object-cover ring-2 ring-[var(--app-border-subtle)]" />
+              <div>
+                <p class="text-lg font-semibold text-text-primary">${escHtml(user?.name ?? '')}</p>
+                <p class="text-sm text-text-secondary">${escHtml(user?.email ?? '')}</p>
+                <span class="badge mt-1 ${role === 'admin' ? 'role-admin' : role === 'teacher' ? 'role-teacher' : 'role-student'}">${role}</span>
+              </div>
+            </div>
+            ${user?.bio ? `<p class="text-sm text-text-secondary italic">"${escHtml(user.bio)}"</p>` : ''}
+            ${user?.badges?.length ? `
+              <div class="mt-4">
+                <p class="text-xs text-text-muted mb-2">Badges</p>
+                <div class="flex flex-wrap gap-2">
+                  ${user.badges.map(b => `
+                    <span class="inline-flex items-center gap-1 rounded-full border border-[var(--app-border-subtle)] bg-white/5 px-2.5 py-1 text-xs text-text-secondary">
+                      <span class="material-symbols-outlined text-[12px] text-amber-400">emoji_events</span>
+                      ${escHtml(b)}
+                    </span>
+                  `).join('')}
+                </div>
+              </div>
+            ` : ''}
+            ${user?.xp ? `
+              <div class="mt-4 flex items-center gap-3">
+                <span class="material-symbols-outlined text-violet-400">bolt</span>
+                <span class="text-sm text-text-secondary">${user.xp.toLocaleString()} XP earned</span>
+              </div>
+            ` : ''}
+          </div>
+
+          <!-- Appearance -->
+          <div class="metric-card">
+            <h2 class="text-base font-semibold text-text-primary mb-4">Appearance</h2>
+            <div class="space-y-4">
+              <div>
+                <p class="text-sm font-medium text-text-secondary mb-3">Theme</p>
+                <div class="flex gap-3">
+                  <button class="theme-btn flex-1 flex flex-col items-center gap-2 rounded-2xl border-2 p-4 transition ${state.preferences.theme === 'dark' ? 'border-primary bg-blue-500/10' : 'border-[var(--app-border-subtle)] bg-white/5 hover:border-blue-500/40'}"
+                    data-theme="dark">
+                    <span class="material-symbols-outlined text-2xl ${state.preferences.theme === 'dark' ? 'text-primary' : 'text-text-muted'}">dark_mode</span>
+                    <span class="text-sm font-medium ${state.preferences.theme === 'dark' ? 'text-primary' : 'text-text-secondary'}">Dark</span>
+                  </button>
+                  <button class="theme-btn flex-1 flex flex-col items-center gap-2 rounded-2xl border-2 p-4 transition ${state.preferences.theme === 'light' ? 'border-primary bg-blue-500/10' : 'border-[var(--app-border-subtle)] bg-white/5 hover:border-blue-500/40'}"
+                    data-theme="light">
+                    <span class="material-symbols-outlined text-2xl ${state.preferences.theme === 'light' ? 'text-primary' : 'text-text-muted'}">light_mode</span>
+                    <span class="text-sm font-medium ${state.preferences.theme === 'light' ? 'text-primary' : 'text-text-secondary'}">Light</span>
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <p class="text-sm font-medium text-text-secondary mb-2">Language</p>
+                <select id="language-select" class="form-input max-w-xs">
+                  ${['English','Spanish','French','German','Japanese','Chinese'].map(lang =>
+                    `<option value="${lang}" ${state.preferences.language === lang ? 'selected' : ''}>${lang}</option>`
+                  ).join('')}
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- Notifications -->
+          <div class="metric-card">
+            <h2 class="text-base font-semibold text-text-primary mb-4">Notifications</h2>
+            <div class="space-y-3">
+              ${[
+                { label: 'Assignment deadlines', desc: 'Get notified when assignments are due soon', key: 'assignmentDeadlines' },
+                { label: 'Grade updates', desc: 'Notified when a grade is posted', key: 'gradeUpdates' },
+                { label: 'Discussion replies', desc: 'Notified when someone replies to your thread', key: 'discussionReplies' },
+                { label: 'New messages', desc: 'Notified when you receive a chat message', key: 'newMessages' },
+              ].map(n => {
+                const on = state.preferences.notifications?.[n.key] ?? false;
+                return `
+                <div class="flex items-center justify-between gap-4 rounded-xl border border-[var(--app-border-subtle)] bg-white/5 p-4">
+                  <div>
+                    <p class="text-sm font-medium text-text-primary">${n.label}</p>
+                    <p class="text-xs text-text-secondary mt-0.5">${n.desc}</p>
+                  </div>
+                  <button class="notif-toggle relative h-6 w-11 shrink-0 rounded-full transition ${on ? 'bg-primary' : 'bg-white/10'}" aria-checked="${on}" data-key="${n.key}">
+                    <span class="absolute top-0.5 h-5 w-5 rounded-full bg-white shadow-sm transition-all ${on ? 'left-[calc(100%-1.375rem)]' : 'left-0.5'}"></span>
+                  </button>
+                </div>`;
+              }).join('')}
+            </div>
+          </div>
+
+          <!-- Data management -->
+          <div class="metric-card">
+            <h2 class="text-base font-semibold text-text-primary mb-4">Account</h2>
+            <div class="space-y-3">
+              ${role === 'admin' ? `
+              <button id="reset-btn" class="flex w-full items-center gap-3 rounded-xl border border-amber-500/20 bg-amber-500/5 p-4 text-left hover:bg-amber-500/10 transition">
+                <span class="material-symbols-outlined text-amber-400">restart_alt</span>
+                <div>
+                  <p class="text-sm font-medium text-text-primary">Reset Demo Data</p>
+                  <p class="text-xs text-text-secondary">Restore all seed data to factory defaults</p>
+                </div>
+              </button>
+              ` : ''}
+              <button id="signout-settings-btn" class="flex w-full items-center gap-3 rounded-xl border border-red-500/20 bg-red-500/5 p-4 text-left hover:bg-red-500/10 transition">
+                <span class="material-symbols-outlined text-red-400">logout</span>
+                <div>
+                  <p class="text-sm font-medium text-text-primary">Sign Out</p>
+                  <p class="text-xs text-text-secondary">Clear your session and return to login</p>
+                </div>
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+
+      // Theme buttons
+      document.querySelectorAll('.theme-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          setTheme(btn.dataset.theme);
+          showToast(`Theme changed to ${btn.dataset.theme}!`);
+        });
+      });
+
+      // Language select
+      document.getElementById('language-select')?.addEventListener('change', (e) => {
+        setLanguage(e.target.value);
+        showToast(`Language set to ${e.target.value}.`);
+      });
+
+      // Notification toggles — persisted to state
+      document.querySelectorAll('.notif-toggle').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const on = btn.getAttribute('aria-checked') === 'true';
+          setNotificationPref(btn.dataset.key, !on);
+        });
+      });
+
+      // Reset
+      document.getElementById('reset-btn')?.addEventListener('click', () => {
+        if (confirm('Reset all data to defaults? This will sign you out.')) {
+          resetDemoData();
+          window.location.href = 'login.html';
+        }
+      });
+
+      // Sign out
+      document.getElementById('signout-settings-btn')?.addEventListener('click', () => {
+        signOut();
+        window.location.href = 'login.html';
+      });
+    }
+  </script>
+</body>
+</html>

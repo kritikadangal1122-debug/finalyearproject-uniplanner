@@ -1,13 +1,11 @@
-import type express from 'express';
 import { randomUUID } from 'crypto';
-import { store } from '../store';
-import { API_PREFIX, createJsonRoute, requireAuth, requireRole } from '../http';
+import { store } from '../store.js';
+import { API_PREFIX, createJsonRoute, requireAuth, requireRole } from '../http.js';
 
-export const registerResourcesModule = (app: express.Express) => {
+export const registerResourcesModule = (app) => {
   app.get(`${API_PREFIX}/resources`, createJsonRoute((req, res) => {
     const auth = requireAuth(req, res);
     if (!auth) return;
-
     res.json({ resources: store.getSnapshot().app.resources });
   }));
 
@@ -18,7 +16,7 @@ export const registerResourcesModule = (app: express.Express) => {
       return;
     }
 
-    const { classId, name, type, size, preview } = req.body as { classId?: string; name?: string; type?: any; size?: string; preview?: string };
+    const { classId, name, type, size, preview } = req.body;
     if (!classId || !name || !type || !size || !preview) {
       res.status(400).json({ error: 'Missing resource fields.' });
       return;
@@ -32,7 +30,7 @@ export const registerResourcesModule = (app: express.Express) => {
       size,
       preview,
       updatedAt: 'Just now',
-    } as any;
+    };
 
     store.update((draft) => {
       draft.app.resources = [resource, ...draft.app.resources];

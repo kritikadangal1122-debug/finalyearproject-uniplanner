@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Calendar — UniPlanner</title>
+  <link rel="stylesheet" href="css/theme.css" />
+  <script>window.tailwind={config:{theme:{extend:{colors:{primary:'var(--primary)',secondary:'var(--secondary)','text-primary':'var(--app-text-primary)','text-secondary':'var(--app-text-secondary)','text-muted':'var(--app-text-muted)','border-subtle':'var(--app-border-subtle)'}}}}}</script>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body>
+  <aside id="sidebar" class="sidebar closed"></aside>
+  <div id="sidebar-overlay" class="sidebar-overlay"></div>
+  <div class="main-content">
+    <header id="topbar" class="topbar"></header>
+    <main id="page-content" class="page-inner"></main>
+  </div>
+  <div id="toast-container" class="toast-container"></div>
+
+  <!-- Add event modal -->
+  <div id="event-modal" class="modal-overlay hidden">
+    <div class="modal-box">
+      <div class="mb-5 flex items-center justify-between">
+        <h3 class="text-lg font-semibold text-text-primary">Add Event</h3>
+        <button id="event-modal-close" class="btn-ghost p-1"><span class="material-symbols-outlined">close</span></button>
+      </div>
+      <form id="event-form" class="space-y-3">
+        <input id="ev-title" class="form-input" placeholder="Event title" required />
+        <select id="ev-class" class="form-input"></select>
+        <input id="ev-date" class="form-input" type="date" required />
+        <div class="grid grid-cols-2 gap-2">
+          <input id="ev-start" class="form-input" type="time" required />
+          <input id="ev-end" class="form-input" type="time" />
+        </div>
+        <select id="ev-type" class="form-input">
+          <option value="class">Class</option>
+          <option value="deadline">Deadline</option>
+          <option value="exam">Exam</option>
+          <option value="meeting">Meeting</option>
+        </select>
+        <button type="submit" class="btn-primary w-full py-2.5">
+          <span class="material-symbols-outlined text-[16px]">add</span> Add Event
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Edit event modal -->
+  <div id="edit-event-modal" class="modal-overlay hidden">
+    <div class="modal-box">
+      <div class="mb-5 flex items-center justify-between">
+        <h3 class="text-lg font-semibold text-text-primary">Edit Event</h3>
+        <button id="edit-event-modal-close" class="btn-ghost p-1"><span class="material-symbols-outlined">close</span></button>
+      </div>
+      <form id="edit-event-form" class="space-y-3">
+        <input id="ee-title" class="form-input" placeholder="Event title" required />
+        <input id="ee-date" class="form-input" type="date" required />
+        <div class="grid grid-cols-2 gap-2">
+          <input id="ee-start" class="form-input" type="time" />
+          <input id="ee-end" class="form-input" type="time" />
+        </div>
+        <select id="ee-type" class="form-input">
+          <option value="class">Class</option>
+          <option value="deadline">Deadline</option>
+          <option value="exam">Exam</option>
+          <option value="meeting">Meeting</option>
+        </select>
+        <button type="submit" class="btn-primary w-full py-2.5">Save Changes</button>
+      </form>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initLayout, escHtml, showToast } from './js/app.js';
+    import { getState, getCurrentUser, getCurrentRole, createEvent, updateEvent, deleteEvent, subscribe } from './js/store.js';
+
+    initLayout();
+
+    let currentYear = new Date().getFullYear();
+    let currentMonth = new Date().getMonth();
+    let editingEventId = null;
+    let currentTypeFilter = 'all';
+    const eventTypeColors = { class: '#3b82f6', deadline: '#f59e0b', exam: '#ef4444', meeting: '#8b5cf6' };
+
+    renderPage();
+    subscribe(renderPage);
+
+    function renderPage() {
+      const state = getState();
+      const role = getCurrentRole();
+      const canManage = role === 'teacher' || role === 'admin';
+
+      const evClass = document.getElementById('ev-class');
+      if (evClass) evClass.innerHTML = state.classes.map(c => `<option value="${c.id}">${escHtml(c.title)}</option>`).join('');
+
+      const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+      const today = new Date();
+      const firstDay = new Date(currentYear, currentMonth, 1).getDay();
+      const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+
+      document.getElementById('page-content').innerHTML = `
+        <div class="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <h1 class="text-2xl font-semibold text-text-primary">Calendar</h1>
+          ${canManage ? `<button id="add-event-btn" class="btn-primary text-sm px-4 py-2 self-start"><span class="material-symbols-outlined text-[16px]">add</span> Add Event</button>` : ''}
+        </div>
+
+        <div class="grid gap-5 lg:grid-cols-[1fr_320px]">
+          <!-- Calendar grid -->
+          <div class="metric-card">
+            <div class="mb-4 flex items-center justify-between">
+              <h2 class="text-lg font-semibold text-text-primary">${monthNames[currentMonth]} ${currentYear}</h2>
+              <div class="flex gap-1">
+                <button id="prev-month" class="btn-ghost p-1.5"><span class="material-symbols-outlined text-[18px]">chevron_left</span></button>
+                <button id="next-month" class="btn-ghost p-1.5"><span class="material-symbols-outlined text-[18px]">chevron_right</span></button>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-7 gap-px overflow-hidden rounded-xl border border-[var(--app-border-subtle)]">
+              ${['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(d =>
+                `<div class="bg-white/5 px-2 py-2 text-center text-[10px] font-semibold uppercase tracking-widest text-text-muted">${d}</div>`
+              ).join('')}
+
+              ${Array.from({length: firstDay}, () =>
+                '<div class="min-h-[60px] bg-white/[0.02] p-1"></div>'
+              ).join('')}
+
+              ${Array.from({length: daysInMonth}, (_, i) => {
+                const day = i + 1;
+                const dateStr = `${currentYear}-${String(currentMonth+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+                const dayEvents = state.events.filter(e => e.date === dateStr);
+                const isToday = currentYear === today.getFullYear() && currentMonth === today.getMonth() && day === today.getDate();
+                return `
+                  <div class="min-h-[60px] ${isToday ? 'bg-blue-500/10' : 'bg-white/[0.02] hover:bg-white/[0.05]'} p-1.5 transition">
+                    <p class="text-xs font-medium mb-1 ${isToday ? 'inline-flex h-5 w-5 items-center justify-center rounded-full bg-primary text-white' : 'text-text-muted'}">${day}</p>
+                    ${dayEvents.slice(0,2).map(ev => `
+                      <div class="rounded px-1 py-0.5 mb-0.5 text-[9px] font-medium truncate" style="background:${eventTypeColors[ev.type] ?? '#3b82f6'}33;color:${eventTypeColors[ev.type] ?? '#3b82f6'}">
+                        ${escHtml(ev.title)}
+                      </div>
+                    `).join('')}
+                    ${dayEvents.length > 2 ? `<p class="text-[9px] text-text-muted">+${dayEvents.length-2} more</p>` : ''}
+                  </div>
+                `;
+              }).join('')}
+            </div>
+          </div>
+
+          <!-- Events sidebar -->
+          <div class="space-y-4">
+            <div class="metric-card">
+              <h2 class="text-base font-semibold text-text-primary mb-4">All Events</h2>
+              <div class="flex flex-wrap gap-1.5 mb-4">
+                ${['all','class','deadline','exam','meeting'].map(t => `
+                  <button class="type-filter rounded-full border border-[var(--app-border-subtle)] bg-white/5 px-2.5 py-0.5 text-[10px] font-medium transition hover:border-blue-500/40 ${currentTypeFilter === t ? 'bg-primary text-white border-transparent' : 'text-text-secondary'}" data-type="${t}">
+                    ${t.charAt(0).toUpperCase() + t.slice(1)}
+                  </button>
+                `).join('')}
+              </div>
+              <div id="events-list" class="space-y-2">
+                ${renderEventsList(state.events, currentTypeFilter, canManage)}
+              </div>
+            </div>
+
+            <div class="metric-card">
+              <p class="text-xs uppercase tracking-widest text-text-muted mb-3">Legend</p>
+              <div class="space-y-2">
+                ${Object.entries(eventTypeColors).map(([type, color]) => `
+                  <div class="flex items-center gap-2">
+                    <div class="h-3 w-3 rounded-full shrink-0" style="background:${color}"></div>
+                    <span class="text-sm text-text-secondary capitalize">${type}</span>
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+
+      document.getElementById('add-event-btn')?.addEventListener('click', () => {
+        document.getElementById('ev-date').value = new Date().toISOString().split('T')[0];
+        document.getElementById('event-modal').classList.remove('hidden');
+      });
+
+      document.getElementById('prev-month')?.addEventListener('click', () => {
+        currentMonth--;
+        if (currentMonth < 0) { currentMonth = 11; currentYear--; }
+        renderPage();
+      });
+
+      document.getElementById('next-month')?.addEventListener('click', () => {
+        currentMonth++;
+        if (currentMonth > 11) { currentMonth = 0; currentYear++; }
+        renderPage();
+      });
+
+      document.querySelectorAll('.type-filter').forEach(btn => {
+        btn.addEventListener('click', () => {
+          currentTypeFilter = btn.dataset.type;
+          document.querySelectorAll('.type-filter').forEach(b => b.classList.remove('bg-primary','text-white','border-transparent'));
+          btn.classList.add('bg-primary','text-white','border-transparent');
+          document.getElementById('events-list').innerHTML = renderEventsList(getState().events, currentTypeFilter, canManage);
+          attachEventCardListeners();
+        });
+      });
+
+      attachEventCardListeners();
+    }
+
+    function renderEventsList(events, typeFilter, canManage) {
+      const filtered = typeFilter === 'all' ? events : events.filter(e => e.type === typeFilter);
+      const sorted = [...filtered].sort((a, b) => a.date.localeCompare(b.date));
+      if (sorted.length === 0) return '<p class="text-sm text-text-secondary text-center py-4">No events.</p>';
+      return sorted.map(ev => `
+        <div class="flex items-start gap-3 rounded-xl border border-[var(--app-border-subtle)] bg-white/5 p-3 group">
+          <div class="h-9 w-9 shrink-0 rounded-xl flex items-center justify-center" style="background:${eventTypeColors[ev.type] ?? '#3b82f6'}22">
+            <span class="material-symbols-outlined text-[16px]" style="color:${eventTypeColors[ev.type] ?? '#3b82f6'}">
+              ${ev.type === 'deadline' ? 'schedule' : ev.type === 'exam' ? 'quiz' : ev.type === 'meeting' ? 'group' : 'event'}
+            </span>
+          </div>
+          <div class="flex-1 min-w-0">
+            <p class="text-sm font-semibold text-text-primary truncate">${escHtml(ev.title)}</p>
+            <p class="text-xs text-text-muted mt-0.5">${escHtml(ev.date)}${ev.startTime ? ' · '+escHtml(ev.startTime) : ''}${ev.endTime ? '–'+escHtml(ev.endTime) : ''}</p>
+          </div>
+          ${canManage ? `
+          <div class="flex gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition">
+            <button class="edit-event-btn btn-ghost p-1" data-id="${ev.id}" title="Edit"><span class="material-symbols-outlined text-[15px]">edit</span></button>
+            <button class="delete-event-btn btn-ghost p-1 text-red-400 hover:text-red-300" data-id="${ev.id}" title="Delete"><span class="material-symbols-outlined text-[15px]">delete</span></button>
+          </div>` : ''}
+        </div>
+      `).join('');
+    }
+
+    function attachEventCardListeners() {
+      const state = getState();
+      const role = getCurrentRole();
+      const canManage = role === 'teacher' || role === 'admin';
+      if (!canManage) return;
+
+      document.querySelectorAll('.edit-event-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          editingEventId = btn.dataset.id;
+          const ev = state.events.find(e => e.id === editingEventId);
+          if (!ev) return;
+          document.getElementById('ee-title').value = ev.title;
+          document.getElementById('ee-date').value = ev.date;
+          document.getElementById('ee-start').value = ev.startTime || '';
+          document.getElementById('ee-end').value = ev.endTime || '';
+          document.getElementById('ee-type').value = ev.type;
+          document.getElementById('edit-event-modal').classList.remove('hidden');
+        });
+      });
+
+      document.querySelectorAll('.delete-event-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          if (confirm('Delete this event?')) {
+            deleteEvent(btn.dataset.id);
+            showToast('Event deleted.', 'success');
+          }
+        });
+      });
+    }
+
+    // Add event modal
+    document.getElementById('event-modal-close').addEventListener('click', () => document.getElementById('event-modal').classList.add('hidden'));
+    document.getElementById('event-modal').addEventListener('click', e => { if (e.target === e.currentTarget) e.currentTarget.classList.add('hidden'); });
+    document.getElementById('event-form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const state = getState();
+      const evClass = document.getElementById('ev-class');
+      if (evClass && !evClass.innerHTML) evClass.innerHTML = state.classes.map(c => `<option value="${c.id}">${escHtml(c.title)}</option>`).join('');
+      createEvent({
+        title: document.getElementById('ev-title').value,
+        classId: document.getElementById('ev-class').value,
+        date: document.getElementById('ev-date').value,
+        startTime: document.getElementById('ev-start').value,
+        endTime: document.getElementById('ev-end').value,
+        type: document.getElementById('ev-type').value,
+      });
+      document.getElementById('event-modal').classList.add('hidden');
+      document.getElementById('event-form').reset();
+      showToast('Event added!', 'success');
+    });
+
+    // Edit event modal
+    document.getElementById('edit-event-modal-close').addEventListener('click', () => document.getElementById('edit-event-modal').classList.add('hidden'));
+    document.getElementById('edit-event-modal').addEventListener('click', e => { if (e.target === e.currentTarget) e.currentTarget.classList.add('hidden'); });
+    document.getElementById('edit-event-form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      updateEvent(editingEventId, {
+        title: document.getElementById('ee-title').value,
+        date: document.getElementById('ee-date').value,
+        startTime: document.getElementById('ee-start').value,
+        endTime: document.getElementById('ee-end').value,
+        type: document.getElementById('ee-type').value,
+      });
+      document.getElementById('edit-event-modal').classList.add('hidden');
+      showToast('Event updated!', 'success');
+    });
+
+    // Init modal class select
+    const evClass = document.getElementById('ev-class');
+    if (evClass) evClass.innerHTML = getState().classes.map(c => `<option value="${c.id}">${escHtml(c.title)}</option>`).join('');
+  </script>
+</body>
+</html>
