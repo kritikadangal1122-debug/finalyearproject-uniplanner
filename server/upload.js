@@ -2,15 +2,27 @@ import { v2 as cloudinary } from 'cloudinary';
 import multer from 'multer';
 
 const UNSIGNED_PRESET = 'uniplanner_unsigned';
+const hasCloudinaryConfig = Boolean(
+  process.env.CLOUDINARY_CLOUD_NAME &&
+    process.env.CLOUDINARY_API_KEY &&
+    process.env.CLOUDINARY_API_SECRET,
+);
 
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key:    process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-  secure: true,
-});
+if (hasCloudinaryConfig) {
+  cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET,
+    secure: true,
+  });
+}
 
 export async function ensureUnsignedPreset() {
+  if (!hasCloudinaryConfig) {
+    console.warn('[cloudinary] Skipping preset setup because Cloudinary env vars are not configured.');
+    return;
+  }
+
   try {
     await cloudinary.api.upload_preset(UNSIGNED_PRESET);
     console.log(`[cloudinary] Upload preset "${UNSIGNED_PRESET}" already exists.`);
@@ -37,6 +49,11 @@ export const upload = multer({
 
 export const uploadToCloudinary = (buffer, originalName) =>
   new Promise((resolve, reject) => {
+    if (!hasCloudinaryConfig) {
+      reject(new Error('Cloudinary is not configured. Set CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, and CLOUDINARY_API_SECRET.'));
+      return;
+    }
+
     const stream = cloudinary.uploader.upload_stream(
       { folder: 'uniplanner', resource_type: 'auto', use_filename: true, unique_filename: true },
       (error, result) => {

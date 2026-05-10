@@ -59,6 +59,5 @@ View your app in AI Studio: https://ai.studio/apps/aec90ecd-eb12-4c87-9bd2-87c91
 
 - Authentication uses JWT-style session tokens.
 - Persistent app state is written to `server/data/learning-os.json`.
-- Database schema reference: [database/schema.sql](database/schema.sql)
 - Architecture reference: [docs/learning-os-architecture.md](docs/learning-os-architecture.md)
 - API reference: [docs/learning-os-api.md](docs/learning-os-api.md)
