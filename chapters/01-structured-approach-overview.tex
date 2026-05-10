@@ -1,0 +1,45 @@
+\section{Structured Approach to Repository Scope and Execution Context}
+
+\subsection{Structured Approach to Runtime Composition}
+
+The repository runs as a Node.js modular monolith with Express as the active runtime entrypoint. The production entrypoint in package scripts is \texttt{node server/index.js}, not a Vite command, and the server listens on port \texttt{4000} by default \cite{repo-readme}. The server startup also attempts Cloudinary preset verification through \texttt{ensureUnsignedPreset()}, which is non-fatal when environment variables are not configured \cite{repo-server-app,repo-upload}.
+
+\subsection{Structured Approach to Deliverable Boundaries}
+
+Implementation in this repository is split across two UI tracks:
+\begin{itemize}[leftmargin=1.5em]
+  \item A static multi-page web interface under \texttt{public/} with modular JavaScript scripts for role-specific workflows.
+  \item A React + TypeScript interface under \texttt{src/} that uses routing and context state management.
+\end{itemize}
+
+The active server serves \texttt{public/index.html} for non-API routes, which means the static web UI is directly integrated into the current backend execution path \cite{repo-server-app,repo-public-ui,repo-react-ui}.
+
+\subsection{Structured Approach to Analysis Method}
+
+This report is populated from direct repository inspection of backend modules, middleware, state persistence, frontend scripts, API wrappers, and migration scripts. The approach prioritizes implementation reality over aspirational architecture notes. For example, documentation files mention PostgreSQL and Redis, while executable code persists runtime state in a local JSON snapshot file under \texttt{server/data/learning-os.json} \cite{repo-store}.
+
+\begin{table}[h]
+\centering
+\caption{Primary Executable Surfaces Identified}
+\begin{tabularx}{\linewidth}{>{\raggedright\arraybackslash}p{3.0cm} >{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}p{3.2cm}}
+\toprule
+Surface & Function in Current Implementation & Evidence \\
+\midrule
+\texttt{server/index.js} & Bootstraps API server and Cloudinary preset check & Runtime startup path \\
+\texttt{server/app.js} & Composes middleware, registers domain modules, serves static assets & Express assembly \\
+\texttt{server/modules/*.js} & Encapsulates API routes by domain context & API boundary layer \\
+\texttt{public/*.html + public/js/*.js} & Role-based user workflows rendered as static pages & Active served UI \\
+\texttt{src/*.tsx} & Alternative React client with richer component model & Secondary client track \\
+\texttt{scripts/migrate-to-firebase.mjs} & Full snapshot migration into Firebase Realtime Database & Data export path \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\begin{figure}[h]
+\centering
+\fbox{\parbox[c][2.2in][c]{0.92\linewidth}{\centering
+Interface Figure Placeholder: Login and dashboard transition for the static \texttt{public/} UI, showing role-dependent navigation.
+}}
+\caption{Planned visual evidence slot for role-aware UI transition flow.}
+\label{fig:ui-login-dashboard-placeholder}
+\end{figure}

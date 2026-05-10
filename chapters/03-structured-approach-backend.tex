@@ -1,0 +1,74 @@
+\section{Structured Approach to Backend API and Middleware Implementation}
+
+\subsection{Structured Approach to Middleware Pipeline}
+
+Backend request handling follows this sequence:
+\begin{enumerate}[leftmargin=1.5em]
+  \item Express JSON parser with 5 MB body limit.
+  \item CORS allowlist middleware for local Live Server origins.
+  \item Route-level handlers composed using \texttt{createJsonRoute} to normalize exception handling.
+  \item Auth guards through \texttt{requireAuth} and role checks through \texttt{requireRole}.
+  \item Global error fallback returning a 500 JSON payload.
+\end{enumerate}
+
+This pipeline standardizes error shape and reduces repetitive try/catch blocks in module files \cite{repo-server-app,repo-security}.
+
+\subsection{Structured Approach to Endpoint Inventory}
+
+\begin{longtable}{>{\raggedright\arraybackslash}p{2.4cm} >{\raggedright\arraybackslash}p{1.7cm} >{\raggedright\arraybackslash}p{7.8cm}}
+\caption{Implemented API Endpoint Inventory by Capability}\\
+\toprule
+Path & Method & Implemented Behavior \\
+\midrule
+\endfirsthead
+\toprule
+Path & Method & Implemented Behavior \\
+\midrule
+\endhead
+\texttt{/api/health} & GET & Returns service heartbeat and configuration flag details. \\
+\texttt{/api/meta} & GET & Returns module/capability metadata payload. \\
+\texttt{/api/auth/login} & POST & Validates email/password hash and issues signed JWT plus server-side session. \\
+\texttt{/api/auth/me} & GET & Returns current user and stored permissions for active session token. \\
+\texttt{/api/state} & GET/PUT & Reads and replaces public app snapshot state. \\
+\texttt{/api/preferences/widget-order} & PUT & Updates dashboard widget order in preferences. \\
+\texttt{/api/analytics/overview} & GET & Returns role analytics, health signals, and next-best-action recommendation. \\
+\texttt{/api/insights/next-best-action/:userId} & GET & Returns recommendation with self-or-admin visibility constraints. \\
+\texttt{/api/classes} & GET/POST & Lists classes and creates classes for teacher/admin roles. \\
+\texttt{/api/classes/join} & POST & Enrolls user by class code and increments class student count. \\
+\texttt{/api/classes/:classId/archive} & POST & Archives class with ownership check for teacher role. \\
+\texttt{/api/assignments} & GET/POST & Lists assignments and creates assignment definitions. \\
+\texttt{/api/discussions/:classId} & GET & Fetches class-specific thread list. \\
+\texttt{/api/discussions} & POST & Creates thread and records discussion analytics event. \\
+\texttt{/api/messages/:classId} & GET & Fetches class-scoped chat timeline. \\
+\texttt{/api/messages} & POST & Writes class chat message to snapshot. \\
+\texttt{/api/notifications} & GET & Returns notification list from snapshot. \\
+\texttt{/api/notifications/:id/read} & PATCH & Marks a single notification as read. \\
+\texttt{/api/notifications/stream} & GET & Streams unread notification count every 15 seconds with SSE. \\
+\texttt{/api/events} & GET/POST & Lists and creates calendar events with role checks. \\
+\texttt{/api/resources} & GET/POST & Lists and creates resource metadata objects. \\
+\texttt{/api/upload/resource} & POST & Uploads teacher/admin file to Cloudinary and records resource object. \\
+\texttt{/api/upload/submission} & POST & Uploads student submission file and links to assignment. \\
+\texttt{/api/submissions/:id} & DELETE & Deletes own submission and decrements assignment submission count. \\
+\texttt{/api/submissions/:id/grade} & PATCH & Updates score/feedback and recalculates assignment average score. \\
+\texttt{/api/ai/study-copilot/summary} & POST & Heuristic text summary and key points generation. \\
+\texttt{/api/ai/study-copilot/quiz} & POST & Deterministic question generation from source text. \\
+\texttt{/api/ai/assignment-feedback} & POST & Feedback synthesis based on word-count and rubric focus. \\
+\texttt{/api/ai/discussion-summary} & POST & Discussion summarization and action item synthesis. \\
+\texttt{/api/admin/users} & GET/POST & Lists and creates users (admin only). \\
+\texttt{/api/admin/users/:userId} & PUT/DELETE & Updates or deletes user with last-admin guard. \\
+\texttt{/api/admin/users/:userId/role} & PATCH & Changes user role with validation. \\
+\bottomrule
+\end{longtable}
+
+\subsection{Structured Approach to AI Assist Features}
+
+AI endpoints in \texttt{server/ai.js} are deterministic prompt-free utilities, not remote LLM calls. The summarization and quiz logic derives output from sentence segmentation and keyword extraction. Assignment feedback score uses word count heuristics bounded between 40 and 98. This gives predictable behavior for offline or low-dependency operation while preserving AI-like interaction affordances in UI workflows \cite{repo-server-modules}.
+
+\begin{figure}[h]
+\centering
+\fbox{\parbox[c][2.1in][c]{0.92\linewidth}{\centering
+Backend API Figure Placeholder: Endpoint call trace with request payload, auth header validation step, and JSON snapshot mutation outcome.
+}}
+\caption{Planned trace visualization for API request lifecycle evidence.}
+\label{fig:api-trace-placeholder}
+\end{figure}

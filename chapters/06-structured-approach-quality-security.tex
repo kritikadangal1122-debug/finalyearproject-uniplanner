@@ -1,0 +1,43 @@
+\section{Structured Approach to Quality, Security, and Implementation Gaps}
+
+\subsection{Structured Approach to Security Controls Present in Code}
+
+Implemented controls include:
+\begin{itemize}[leftmargin=1.5em]
+  \item Timing-safe JWT signature verification using \texttt{timingSafeEqual}.
+  \item Role-gated route mutations for admin, teacher, and student boundaries.
+  \item Session expiry enforcement in addition to JWT expiry.
+  \item Removal of password hash from outbound user payload through \texttt{toPublicUser} projection.
+  \item Non-fatal startup behavior when cloud credentials are missing.
+\end{itemize}
+
+These controls provide practical baseline hardening for a demo-ready educational platform backend \cite{repo-security,repo-server-modules}.
+
+\subsection{Structured Approach to Key Implementation Gaps Observed}
+
+Repository analysis identifies several concrete gaps:
+\begin{enumerate}[leftmargin=1.5em]
+  \item \textbf{State model divergence}: static UI and React UI each implement overlapping state and workflow logic, increasing inconsistency risk.
+  \item \textbf{Documentation-runtime mismatch}: docs mention PostgreSQL/Redis-style architecture while runtime persists JSON snapshots.
+  \item \textbf{Client type mismatch risk}: \texttt{src/lib/api.ts} health typing does not fully align with backend \texttt{buildPlatformHealth} payload fields.
+  \item \textbf{No automated test/lint scripts}: package scripts only expose \texttt{start}, \texttt{dev}, and migration command, limiting CI-style regression gates.
+\end{enumerate}
+
+\subsection{Structured Approach to Reliability and Maintainability Priorities}
+
+A practical sequencing strategy derived from current implementation is:
+\begin{enumerate}[leftmargin=1.5em]
+  \item Consolidate to one frontend execution track per release branch.
+  \item Introduce API contract tests around auth, classes, assignments, upload, and grading endpoints.
+  \item Introduce schema validation at route boundaries for body/query payloads.
+  \item Replace synchronous JSON writes with transaction-safe data persistence in a managed database when moving beyond single-instance deployment.
+\end{enumerate}
+
+\begin{figure}[h]
+\centering
+\fbox{\parbox[c][2.1in][c]{0.92\linewidth}{\centering
+Reliability Evidence Placeholder: Comparative chart of API response consistency before and after endpoint contract validation.
+}}
+\caption{Planned measurement placeholder for reliability hardening progress.}
+\label{fig:reliability-placeholder}
+\end{figure}

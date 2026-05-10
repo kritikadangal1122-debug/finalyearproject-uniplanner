@@ -1,0 +1,57 @@
+\section{Structured Approach to System Architecture and Module Topology}
+
+\subsection{Structured Approach to Express Application Topology}
+
+The Express app composes JSON body parsing, targeted CORS handling, API route registration, admin reset tooling, static upload serving, and SPA-like fallback routing for public assets \cite{repo-server-app,express-docs}. The API namespace is normalized through \texttt{API\_PREFIX = /api} inside shared HTTP helpers \cite{repo-security}.
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}[
+  node distance=8mm and 10mm,
+  box/.style={draw, rounded corners, align=center, minimum width=3.2cm, minimum height=0.9cm, font=\small},
+  data/.style={draw, cylinder, shape border rotate=90, aspect=0.25, align=center, minimum height=1.0cm, minimum width=2.2cm, font=\small},
+  arrow/.style={-Latex, thick}
+]
+\node[box] (client) {Browser Client\\(public pages / React client)};
+\node[box, below=of client] (app) {Express App\\\texttt{server/app.js}};
+\node[box, below left=of app, xshift=-10mm] (modules) {Domain Modules\\auth, classes, assignments,\\messages, discussions, events,\\resources, uploads, AI, admin};
+\node[data, below=of modules] (jsondb) {\texttt{learning-os.json}};
+\node[box, below right=of app, xshift=8mm] (cloudinary) {Cloudinary Upload\\Gateway};
+\node[box, right=of cloudinary, xshift=5mm] (firebase) {Firebase Migration\\Script Path};
+
+\draw[arrow] (client) -- node[right,font=\scriptsize]{HTTP / JSON / multipart} (app);
+\draw[arrow] (app) -- (modules);
+\draw[arrow] (modules) -- (jsondb);
+\draw[arrow] (modules.east) -- ++(1.3,0) |- (cloudinary.west);
+\draw[arrow] (jsondb.east) -- ++(1.3,0) |- (firebase.west);
+\end{tikzpicture}
+\caption{Repository-implemented architecture topology.}
+\label{fig:architecture-topology}
+\end{figure}
+
+\subsection{Structured Approach to Backend Domain Boundaries}
+
+\texttt{server/modules/index.js} registers 12 module groups in a deterministic order: authentication, admin, dashboard, classes, assignments, discussions, messages, notifications, events, resources, AI helpers, and upload handling \cite{repo-server-modules}. This achieves bounded routing concerns without introducing cross-process microservices.
+
+\begin{table}[h]
+\centering
+\caption{Module Boundary and Core Responsibility Mapping}
+\begin{tabularx}{\linewidth}{>{\raggedright\arraybackslash}p{3.2cm} >{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}p{3.1cm}}
+\toprule
+Module & Core Responsibility & Access Pattern \\
+\midrule
+Auth & Health/meta endpoints, credential validation, session token issuance & Public + authenticated \\
+Admin & User lifecycle and role management & Admin only \\
+Dashboard & Snapshot access, widget preference updates, analytics overview & Authenticated \\
+Classes & Class create/join/archive lifecycle & Role-gated write operations \\
+Assignments & Assignment retrieval and creation & Teacher/admin create \\
+Upload & Resource/submission file handling and grading updates & Mixed role controls \\
+Notifications & Inbox fetch, mark-read mutation, SSE unread stream & Authenticated \\
+AI & Summaries, quiz generation, feedback synthesis & Input-validated POST endpoints \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{Structured Approach to Architecture Reality Check}
+
+Architecture documentation files describe a planned stack using PostgreSQL, Redis, and S3-compatible storage. Current executable code persists state in JSON files and uses Cloudinary for file object storage. Therefore, the implemented architecture is best classified as a local-file-backed modular monolith with optional cloud upload and optional Firebase migration utilities, rather than a distributed data platform \cite{repo-store,repo-upload,firebase-admin-docs}.

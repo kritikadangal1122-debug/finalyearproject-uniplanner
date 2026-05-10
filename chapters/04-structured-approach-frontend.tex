@@ -1,0 +1,42 @@
+\section{Structured Approach to Frontend Integration and User Workflows}
+
+\subsection{Structured Approach to Static Multi-Page Web Client}
+
+The static client under \texttt{public/} drives user-facing workflows through modular scripts:\
+\texttt{app.js} handles layout shell, role-based navigation, notification panel behavior, and guard redirects;\
+\texttt{store.js} holds local state transitions and persistence;\
+\texttt{cloudinary.js} supports direct browser-to-Cloudinary uploads;\
+\texttt{api.js} wraps backend calls with bearer headers \cite{repo-public-ui,repo-upload}.
+
+Role-specific pages include dashboard, classes, class detail, assignments, grading, collaboration, analytics, calendar, resources, settings, and admin management.
+
+\subsection{Structured Approach to React Client Track}
+
+The repository also contains a React + TypeScript application with route-guarded paths (\texttt{/app}, \texttt{/app/classes}, \texttt{/app/assignments}, \texttt{/app/grading}, etc.) and context-driven state operations \cite{repo-react-ui}. This client calls the same backend API wrapper for login, analytics, uploads, and grading actions.
+
+The two client tracks currently coexist. Static pages are directly served by Express, while React code remains a separate runtime path that would require Vite execution. This dual-track structure is important for release planning because feature drift can occur when business logic exists in both \texttt{public/js/store.js} and \texttt{src/context/LmsContext.tsx}.
+
+\subsection{Structured Approach to Workflow Coverage by Role}
+
+\begin{table}[h]
+\centering
+\caption{Implemented Workflow Coverage by Role}
+\begin{tabularx}{\linewidth}{>{\raggedright\arraybackslash}p{2.0cm} >{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}X}
+\toprule
+Role & Primary UI Workflows & Primary Backend Dependencies \\
+\midrule
+Student & Login, join class, submit assignment, follow discussions, view analytics and notifications & \texttt{/auth/login}, \texttt{/classes/join}, \texttt{/upload/submission}, \texttt{/discussions}, \texttt{/notifications} \\
+Teacher & Create classes, create assignments, upload resources, grade submissions, track class analytics & \texttt{/classes}, \texttt{/assignments}, \texttt{/upload/resource}, \texttt{/submissions/:id/grade}, \texttt{/analytics/overview} \\
+Admin & User provisioning, role updates, platform-level analytics review, reset demo state & \texttt{/admin/users*}, \texttt{/insights/next-best-action/:id}, \texttt{/admin/reset-demo} \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\begin{figure}[h]
+\centering
+\fbox{\parbox[c][2.2in][c]{0.92\linewidth}{\centering
+UI Workflow Placeholder: Student submission path from assignments page to Cloudinary upload and server submission record creation.
+}}
+\caption{Planned capture slot for assignment submission workflow in the static UI.}
+\label{fig:student-submission-ui-placeholder}
+\end{figure}

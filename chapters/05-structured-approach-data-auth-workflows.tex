@@ -1,0 +1,59 @@
+\section{Structured Approach to Data Persistence, Authentication, and Operational Workflows}
+
+\subsection{Structured Approach to Snapshot-Centric Data Persistence}
+
+The primary data store is a JSON file at \texttt{server/data/learning-os.json}. \texttt{LearningStore} initializes default state from seeded data, persists updates synchronously, and exposes helper methods for sessions, analytics events, submissions, and entity lookups \cite{repo-store}. This approach simplifies local development and demo reproducibility.
+
+The persisted snapshot includes:
+\begin{itemize}[leftmargin=1.5em]
+  \item \texttt{app}: users, classes, assignments, discussions, messages, notifications, events, resources.
+  \item \texttt{submissions}: uploaded student work records with grading metadata.
+  \item \texttt{analyticsEvents}: append-only event feed used for dashboard signals.
+  \item \texttt{sessions}: active token registry used for session revocation and expiry checks.
+  \item \texttt{goals} and \texttt{permissions}: role and intervention signal support.
+\end{itemize}
+
+\subsection{Structured Approach to Authentication and Session Lifecycle}
+
+Authentication combines JWT signing with server-side session storage:
+\begin{enumerate}[leftmargin=1.5em]
+  \item User credentials are validated by SHA-256 password hash comparison.
+  \item JWT payload includes \texttt{sub}, \texttt{role}, \texttt{iat}, \texttt{exp}, and \texttt{jti}.
+  \item Token is signed with HMAC-SHA256 using \texttt{LEARNING\_OS\_JWT\_SECRET}.
+  \item Session record is stored in snapshot with expiration timestamp.
+  \item \texttt{requireAuth} validates bearer token, signature, expiry, session presence, and user existence.
+\end{enumerate}
+
+This design adds revocation control compared with stateless JWT-only validation \cite{repo-security,node-crypto-docs}.
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}[
+  node distance=7mm and 10mm,
+  step/.style={draw, rounded corners, align=center, minimum width=3.2cm, minimum height=0.85cm, font=\small},
+  arrow/.style={-Latex, thick}
+]
+\node[step] (u1) {Client submits\\email + password};
+\node[step, right=of u1] (s1) {\texttt{/api/auth/login}\\hash + compare};
+\node[step, right=of s1] (s2) {Sign JWT\\HMAC-SHA256};
+\node[step, below=of s2] (s3) {Persist session\\in snapshot};
+\node[step, left=of s3] (u2) {Client stores token\\Bearer header};
+\node[step, left=of u2] (s4) {\texttt{requireAuth} verifies\\token + session + user};
+
+\draw[arrow] (u1) -- (s1);
+\draw[arrow] (s1) -- (s2);
+\draw[arrow] (s2) -- (s3);
+\draw[arrow] (s3) -- (u2);
+\draw[arrow] (u2) -- (s4);
+\end{tikzpicture}
+\caption{Authentication and guarded request sequence implemented in the repository.}
+\label{fig:auth-sequence}
+\end{figure}
+
+\subsection{Structured Approach to File Upload and Grading Workflow}
+
+Resource and submission uploads use \texttt{multer.memoryStorage()} and forward file buffers to Cloudinary. The workflow enforces role constraints for resource upload and ownership constraints for submission deletion. Grading mutations update both submission records and assignment-level aggregate metrics (average score and status transition to graded) \cite{repo-upload,multer-docs,cloudinary-docs}.
+
+\subsection{Structured Approach to Migration Workflow}
+
+The repository includes \texttt{scripts/migrate-to-firebase.mjs} for full snapshot export to Firebase Realtime Database under \texttt{/learning\_os}. The migration script loads environment variables from \texttt{.env} and \texttt{.env.local}, sanitizes undefined values, computes entity counts, and uploads both metadata and full data payload using Firebase Admin SDK credentials \cite{firebase-admin-docs}.
